@@ -1,5 +1,8 @@
+
+
 import { useEffect, useRef, useState } from "react";
 import html2canvas from "html2canvas";
+import QRCode from "qrcode";
 
 type AuraProfile = {
   username: string;
@@ -14,6 +17,8 @@ type AuraProfile = {
   accent: string;
 };
 
+const SITE_URL = "https://aura.kodari.xyz";
+
 const clamp = (
   value: number,
   min = 0,
@@ -27,7 +32,8 @@ const cleanUsername = (value: string) => {
     .trim()
     .replace(/^@/, "")
     .replace(/\s/g, "")
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/[^a-z0-9._]/g, "");
 };
 
 const hashString = (value: string) => {
@@ -57,7 +63,13 @@ const randomFromSeed = (
 const getNameQuality = (
   username: string
 ) => {
-  const clean = username.toLowerCase();
+  const clean = username
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+  if (!clean) {
+    return 1;
+  }
 
   const letters =
     clean.match(/[a-z]/g) ?? [];
@@ -71,23 +83,20 @@ const getNameQuality = (
     ) ?? [];
 
   if (!letters.length) {
-    return 5;
+    return 8;
   }
 
-  let quality = 70;
+  let quality = 66;
 
   const vowelRatio =
     vowels.length / letters.length;
-
-  const consonantRatio =
-    consonants.length / letters.length;
 
   const uniqueRatio =
     new Set(letters).size /
     Math.max(letters.length, 1);
 
   const keyboardSpam =
-    /asdf|sdfg|dfgh|qwer|wert|zxcv|xcvb|qaz|wsx|edc|rfv/i.test(
+    /asdf|sdfg|dfgh|fghj|ghjk|qwer|wert|erty|zxcv|xcvb|qaz|wsx|edc|rfv|tgb/i.test(
       clean
     );
 
@@ -97,113 +106,115 @@ const getNameQuality = (
   const repeatedLetters =
     /(.)\1{2,}/i.test(clean);
 
-  const consonantCluster =
-    /[bcdfghjklmnpqrstvwxyz]{3,}/i.test(
-      clean
-    );
+  const repeatedPairs =
+    /(.{2})\1{1,}/i.test(clean);
 
-  const veryBadConsonantCluster =
+  const badConsonants =
     /[bcdfghjklmnpqrstvwxyz]{4,}/i.test(
       clean
     );
 
-  const rareLetters =
-    clean.match(/[qxzjk]/g) ?? [];
-
-  const startsWithBadCluster =
-    /^[bcdfghjklmnpqrstvwxyz]{2,}/i.test(
+  const mediumConsonants =
+    /[bcdfghjklmnpqrstvwxyz]{3,}/i.test(
       clean
     );
 
-  const endsWithBadCluster =
-    /[bcdfghjklmnpqrstvwxyz]{3,}$/i.test(
-      clean
-    );
+  const onlyNumbers =
+    /^\d+$/.test(clean);
+
+  const randomLetters =
+    /^[a-z]{6,}$/i.test(clean) &&
+    vowelRatio < 0.2;
+
+  const tooManyRareLetters =
+    (
+      clean.match(/[qxzjk]/g) ?? []
+    ).length >= 2;
 
   if (
-    vowelRatio >= 0.25 &&
-    vowelRatio <= 0.65
+    vowelRatio >= 0.28 &&
+    vowelRatio <= 0.62
   ) {
-    quality += 12;
+    quality += 13;
   } else {
-    quality -= 12;
+    quality -= 10;
   }
 
   if (uniqueRatio >= 0.75) {
-    quality += 6;
+    quality += 8;
   }
 
   if (uniqueRatio < 0.5) {
-    quality -= 12;
+    quality -= 15;
   }
 
   if (keyboardSpam) {
-    quality -= 45;
+    quality -= 55;
   }
 
   if (repeatedPattern) {
-    quality -= 40;
+    quality -= 50;
   }
 
   if (repeatedLetters) {
-    quality -= 12;
-  }
-
-  if (consonantCluster) {
-    quality -= 20;
-  }
-
-  if (veryBadConsonantCluster) {
-    quality -= 20;
-  }
-
-  if (rareLetters.length >= 2) {
     quality -= 18;
   }
 
-  if (startsWithBadCluster) {
-    quality -= 12;
+  if (repeatedPairs) {
+    quality -= 20;
   }
 
-  if (endsWithBadCluster) {
-    quality -= 12;
+  if (badConsonants) {
+    quality -= 32;
+  } else if (mediumConsonants) {
+    quality -= 15;
   }
 
-  const half = Math.floor(
-    clean.length / 2
-  );
+  if (tooManyRareLetters) {
+    quality -= 16;
+  }
 
-  if (
-    clean.length >= 4 &&
-    clean.slice(0, half) ===
-      clean.slice(half, half * 2)
-  ) {
+  if (randomLetters) {
     quality -= 35;
   }
 
   if (
-    consonantRatio >= 0.75 &&
-    letters.length >= 4
+    onlyNumbers &&
+    clean !== "777" &&
+    clean !== "666" &&
+    clean !== "404"
   ) {
-    quality -= 25;
+    quality -= 20;
   }
 
-  if (letters.length === 3) {
+  if (clean.length <= 2) {
+    quality -= 10;
+  }
+
+  if (clean.length === 3) {
     if (vowelRatio >= 0.33) {
-      quality += 8;
+      quality += 10;
     } else {
-      quality -= 18;
+      quality -= 15;
     }
   }
 
   if (
-    letters.length >= 3 &&
-    letters.length <= 8 &&
+    clean.length >= 3 &&
+    clean.length <= 8 &&
     vowelRatio >= 0.3 &&
     vowelRatio <= 0.6 &&
     uniqueRatio >= 0.65
   ) {
-    quality += 10;
+    quality += 12;
+  }
+
+  if (
+    clean.length >= 4 &&
+    clean.length <= 7 &&
+    uniqueRatio >= 0.8
+  ) {
+    quality += 8;
   }
 
   return Math.round(
@@ -217,9 +228,11 @@ const getMessage = (
   seed: number,
   quality: number
 ) => {
-  const clean = username.toLowerCase();
+  const clean = username
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 
-  if (quality < 25) {
+  if (quality < 20) {
     const messages = [
       "¿Eso es un nombre o un accidente?",
       "Demasiadas teclas juntas.",
@@ -237,12 +250,8 @@ const getMessage = (
     ];
   }
 
-  if (quality < 40) {
+  if (quality < 35) {
     return "Tiene potencial, pero algo no termina de cerrar.";
-  }
-
-  if (clean.length === 1) {
-    return "Una letra. Demasiada confianza.";
   }
 
   if (/^\d+$/.test(clean)) {
@@ -257,6 +266,10 @@ const getMessage = (
     return "Pocas letras. Mucha intención.";
   }
 
+  if (clean.length === 1) {
+    return "Una letra. Demasiada confianza.";
+  }
+
   if (
     clean.includes("x") &&
     clean.length <= 4
@@ -266,7 +279,7 @@ const getMessage = (
 
   if (
     clean.includes("_") &&
-    clean.length >= 8
+    username.length >= 8
   ) {
     return "Hay planificación detrás de este nombre.";
   }
@@ -316,6 +329,8 @@ const calculateProfile = (
 
   const length = username.length;
 
+  const letters =
+    username.match(/[a-z]/gi) ?? [];
 
   const numbers =
     username.match(/[0-9]/g) ?? [];
@@ -333,8 +348,8 @@ const calculateProfile = (
     getNameQuality(username);
 
   let aura =
-    1800 +
-    quality * 58;
+    1900 +
+    quality * 54;
 
   if (
     length >= 3 &&
@@ -349,14 +364,14 @@ const calculateProfile = (
     length <= 8 &&
     quality >= 82
   ) {
-    aura += 350;
+    aura += 300;
   }
 
   const variation =
     Math.round(
       randomFromSeed(seed, 777) *
-        500
-    ) - 250;
+        420
+    ) - 210;
 
   aura += variation;
 
@@ -364,45 +379,45 @@ const calculateProfile = (
     numbers.length > 0 &&
     quality >= 65
   ) {
-    aura += 120;
+    aura += 100;
   }
 
   if (
     username.includes("_") &&
     quality >= 65
   ) {
-    aura += 80;
+    aura += 70;
   }
 
-  if (quality < 25) {
+  if (quality < 20) {
     aura =
-      900 +
+      650 +
       Math.round(
         randomFromSeed(seed, 123) *
-          700
+          950
       );
-  } else if (quality < 40) {
+  } else if (quality < 35) {
     aura =
-      1700 +
+      1500 +
       Math.round(
         randomFromSeed(seed, 234) *
-          900
+          1000
       );
-  } else if (quality < 55) {
+  } else if (quality < 50) {
     aura =
-      2800 +
+      2700 +
       Math.round(
         randomFromSeed(seed, 345) *
-          1000
+          1100
       );
   }
 
   if (quality >= 88) {
-    aura += 350;
+    aura += 300;
   }
 
   if (quality >= 94) {
-    aura += 450;
+    aura += 350;
   }
 
   if (
@@ -519,6 +534,14 @@ const formatAura = (
   return value.toLocaleString("es-AR");
 };
 
+const getProfileUrl = (
+  username: string
+) => {
+  return `${SITE_URL}/?u=${encodeURIComponent(
+    username
+  )}`;
+};
+
 export const FormAura = () => {
   const [username, setUsername] =
     useState("");
@@ -535,55 +558,77 @@ export const FormAura = () => {
   const [downloading, setDownloading] =
     useState(false);
 
+  const [sharing, setSharing] =
+    useState(false);
+
+  const [fromSharedLink, setFromSharedLink] =
+    useState(false);
+
+  const [qrCode, setQrCode] =
+    useState<string | null>(null);
+
   const shareCardRef =
     useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
 
-    const previousHtmlOverflow =
-      html.style.overflow;
+    const sharedUsername =
+      params.get("u");
 
-    const previousBodyOverflow =
-      body.style.overflow;
-
-    html.style.overflow = "hidden";
-    body.style.overflow = "hidden";
-
-    return () => {
-      html.style.overflow =
-        previousHtmlOverflow;
-
-      body.style.overflow =
-        previousBodyOverflow;
-    };
-  }, []);
-
-  const checkAura = (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
-    e.preventDefault();
-
-    const clean =
-      cleanUsername(username);
-
-    if (!clean || loading) {
+    if (!sharedUsername) {
       return;
     }
 
-    setLoading(true);
+    const clean =
+      cleanUsername(
+        sharedUsername
+      );
 
-    setTimeout(() => {
-      const result =
-        calculateProfile(clean);
+    if (!clean) {
+      return;
+    }
 
-      setUsername(clean);
-      setProfile(result);
-      setDisplayAura(0);
-      setLoading(false);
-    }, 650);
-  };
+    const result =
+      calculateProfile(clean);
+
+    setUsername(clean);
+    setProfile(result);
+    setFromSharedLink(true);
+  }, []);
+
+  useEffect(() => {
+    if (!profile) {
+      setQrCode(null);
+      return;
+    }
+
+    const url =
+      getProfileUrl(
+        profile.username
+      );
+
+    QRCode.toDataURL(url, {
+      width: 280,
+      margin: 2,
+      color: {
+        dark: "#ffffff",
+        light: "#111318",
+      },
+    })
+      .then((value) => {
+        setQrCode(value);
+      })
+      .catch((error) => {
+        console.error(
+          "No se pudo generar el QR:",
+          error
+        );
+      });
+  }, [profile]);
 
   useEffect(() => {
     if (!profile) {
@@ -643,9 +688,31 @@ export const FormAura = () => {
     };
   }, [profile]);
 
+  const createCanvas = async () => {
+    if (!shareCardRef.current) {
+      return null;
+    }
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, 150)
+    );
+
+    return html2canvas(
+      shareCardRef.current,
+      {
+        width: 1080,
+        height: 1920,
+        scale: 1,
+        backgroundColor: "#0b0c10",
+        logging: false,
+        windowWidth: 1080,
+        windowHeight: 1920,
+      }
+    );
+  };
+
   const downloadImage = async () => {
     if (
-      !shareCardRef.current ||
       !profile ||
       downloading
     ) {
@@ -655,24 +722,12 @@ export const FormAura = () => {
     try {
       setDownloading(true);
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, 100)
-      );
-
       const canvas =
-        await html2canvas(
-          shareCardRef.current,
-          {
-            width: 1080,
-            height: 1920,
-            scale: 1,
-            backgroundColor:
-              "#0b0c10",
-            logging: false,
-            windowWidth: 1080,
-            windowHeight: 1920,
-          }
-        );
+        await createCanvas();
+
+      if (!canvas) {
+        return;
+      }
 
       const dataUrl =
         canvas.toDataURL(
@@ -683,14 +738,11 @@ export const FormAura = () => {
         document.createElement("a");
 
       link.href = dataUrl;
-
       link.download =
         `aura-${profile.username}.png`;
 
       document.body.appendChild(link);
-
       link.click();
-
       document.body.removeChild(link);
     } catch (error) {
       console.error(
@@ -702,36 +754,182 @@ export const FormAura = () => {
     }
   };
 
+  const shareResult = async () => {
+    if (
+      !profile ||
+      sharing
+    ) {
+      return;
+    }
+
+    try {
+      setSharing(true);
+
+      const canvas =
+        await createCanvas();
+
+      if (!canvas) {
+        return;
+      }
+
+      const blob =
+        await new Promise<Blob | null>(
+          (resolve) =>
+            canvas.toBlob(
+              resolve,
+              "image/png"
+            )
+        );
+
+      if (!blob) {
+        return;
+      }
+
+      const file =
+        new File(
+          [
+            blob,
+          ],
+          `aura-${profile.username}.png`,
+          {
+            type: "image/png",
+          }
+        );
+
+      const shareUrl =
+        getProfileUrl(
+          profile.username
+        );
+
+      const shareText =
+        `@${profile.username} tiene ${formatAura(
+          profile.aura
+        )} de aura 🗿 ¿Cuánto tenés vos?`;
+
+      if (
+        navigator.share &&
+        navigator.canShare &&
+        navigator.canShare({
+          files: [file],
+        })
+      ) {
+        await navigator.share({
+          title: "Aura Check",
+          text: shareText,
+          url: shareUrl,
+          files: [file],
+        });
+
+        return;
+      }
+
+      if (
+        navigator.share
+      ) {
+        await navigator.share({
+          title: "Aura Check",
+          text: shareText,
+          url: shareUrl,
+        });
+
+        return;
+      }
+
+      const link =
+        document.createElement("a");
+
+      link.href =
+        URL.createObjectURL(blob);
+
+      link.download =
+        `aura-${profile.username}.png`;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(
+        link.href
+      );
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.name === "AbortError"
+      ) {
+        return;
+      }
+
+      console.error(
+        "No se pudo compartir:",
+        error
+      );
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const checkAura = (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault();
+
+    const clean =
+      cleanUsername(username);
+
+    if (
+      !clean ||
+      loading
+    ) {
+      return;
+    }
+
+    setFromSharedLink(false);
+    setLoading(true);
+
+    setTimeout(() => {
+      const result =
+        calculateProfile(clean);
+
+      setUsername(clean);
+      setProfile(result);
+      setDisplayAura(0);
+      setLoading(false);
+
+      window.history.replaceState(
+        {},
+        "",
+        `/?u=${encodeURIComponent(
+          clean
+        )}`
+      );
+    }, 650);
+  };
+
   const reset = () => {
     setUsername("");
     setProfile(null);
     setDisplayAura(0);
+    setFromSharedLink(false);
+    setQrCode(null);
+
+    window.history.replaceState(
+      {},
+      "",
+      "/"
+    );
   };
 
   return (
-    <main className="relative h-[100dvh] w-full overflow-hidden bg-[#0b0c10] text-white">
+    <main className="relative min-h-[100svh] overflow-hidden bg-[#0b0c10] text-white">
 
-      <div className="pointer-events-none absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_15%_0%,rgba(88,101,242,0.10),transparent_28%),radial-gradient(circle_at_100%_100%,rgba(250,204,21,0.05),transparent_30%)]" />
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(88,101,242,0.10),transparent_28%),radial-gradient(circle_at_100%_100%,rgba(250,204,21,0.05),transparent_30%)]" />
 
-      <section
-        className={`relative z-10 h-full w-full ${
-          profile
-            ? "overflow-y-auto overscroll-contain"
-            : "overflow-hidden"
-        }`}
-      >
+      <section className="relative z-10 flex min-h-[100svh] items-center justify-center px-4 py-8">
 
-        <div
-          className={`mx-auto flex w-full max-w-[430px] px-4 ${
-            profile
-              ? "min-h-full items-start py-6"
-              : "h-full items-center"
-          }`}
-        >
+        <div className="w-full max-w-[430px]">
 
-          <div className="w-full">
-
-            {!profile && !loading && (
+          {!profile &&
+            !loading && (
               <div>
 
                 <div className="mb-7">
@@ -770,7 +968,9 @@ export const FormAura = () => {
                 </div>
 
                 <form
-                  onSubmit={checkAura}
+                  onSubmit={
+                    checkAura
+                  }
                   className="overflow-hidden rounded-xl border border-white/[0.07] bg-[#111318] shadow-2xl"
                 >
 
@@ -802,10 +1002,15 @@ export const FormAura = () => {
                       <input
                         id="username"
                         type="text"
-                        value={username}
-                        onChange={(e) =>
+                        value={
+                          username
+                        }
+                        onChange={(
+                          e
+                        ) =>
                           setUsername(
-                            e.target.value
+                            e.target
+                              .value
                           )
                         }
                         placeholder="maty.alvarez0k"
@@ -834,36 +1039,52 @@ export const FormAura = () => {
               </div>
             )}
 
-            {loading && (
-              <div className="flex h-full min-h-[100dvh] flex-col items-center justify-center text-center">
+          {loading && (
+            <div className="flex min-h-[440px] flex-col items-center justify-center text-center">
 
-                <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-[#5865F2]/[0.06]">
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-[#5865F2]/[0.06]">
 
-                  <div className="absolute inset-1 animate-spin rounded-full border-2 border-transparent border-t-[#facc15]" />
+                <div className="absolute inset-1 animate-spin rounded-full border-2 border-transparent border-t-[#facc15]" />
 
-                  <span className="text-xl font-black">
-                    A
-                  </span>
-
-                </div>
-
-                <p className="mt-7 text-[10px] font-bold tracking-[0.25em] text-[#facc15] uppercase">
-                  analizando
-                </p>
-
-                <p className="mt-2 text-sm text-white/25">
-                  @{username}
-                </p>
-
-                <p className="mt-7 text-xs text-white/20">
-                  calculando presencia...
-                </p>
+                <span className="text-xl font-black">
+                  A
+                </span>
 
               </div>
-            )}
 
-            {profile && !loading && (
-              <div className="w-full pb-6">
+              <p className="mt-7 text-[10px] font-bold tracking-[0.25em] text-[#facc15] uppercase">
+                analizando
+              </p>
+
+              <p className="mt-2 text-sm text-white/25">
+                @{username}
+              </p>
+
+              <p className="mt-7 text-xs text-white/20">
+                calculando presencia...
+              </p>
+
+            </div>
+          )}
+
+          {profile &&
+            !loading && (
+              <div>
+
+                {fromSharedLink && (
+                  <div className="mb-3 rounded-lg border border-[#5865F2]/20 bg-[#5865F2]/[0.06] px-4 py-3 text-center">
+
+                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#8b7cf6] uppercase">
+                      te desafiaron
+                    </p>
+
+                    <p className="mt-1 text-xs text-white/45">
+                      Este es el resultado
+                      de @{profile.username}
+                    </p>
+
+                  </div>
+                )}
 
                 <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-[#111318] shadow-2xl">
 
@@ -885,7 +1106,10 @@ export const FormAura = () => {
 
                       <div>
                         <p className="text-sm font-bold">
-                          @{profile.username}
+                          @
+                          {
+                            profile.username
+                          }
                         </p>
 
                         <p className="text-[10px] text-white/25">
@@ -902,7 +1126,9 @@ export const FormAura = () => {
                           profile.accent,
                       }}
                     >
-                      {profile.rank}
+                      {
+                        profile.rank
+                      }
                     </span>
 
                   </div>
@@ -989,11 +1215,16 @@ export const FormAura = () => {
                       <div className="mt-5 rounded-lg bg-[#191b21] px-4 py-3.5">
 
                         <p className="text-base font-black text-white/80">
-                          {profile.message}
+                          {
+                            profile.message
+                          }
                         </p>
 
                         <p className="mt-1 text-[10px] text-white/25">
-                          {profile.rank} · firma
+                          {
+                            profile.rank
+                          }{" "}
+                          · firma
                           de aura
                         </p>
 
@@ -1019,16 +1250,23 @@ export const FormAura = () => {
                             profile.impact,
                           ],
                         ].map(
-                          ([name, value]) => (
+                          ([
+                            name,
+                            value,
+                          ]) => (
                             <div
-                              key={name}
+                              key={
+                                name
+                              }
                               className="rounded-lg bg-[#191b21] px-3 py-2.5"
                             >
 
                               <div className="flex items-center justify-between">
 
                                 <p className="text-[8px] font-bold tracking-[0.12em] text-white/20">
-                                  {name}
+                                  {
+                                    name
+                                  }
                                 </p>
 
                                 <p
@@ -1038,7 +1276,9 @@ export const FormAura = () => {
                                       profile.accent,
                                   }}
                                 >
-                                  {value}
+                                  {
+                                    value
+                                  }
                                 </p>
 
                               </div>
@@ -1073,7 +1313,7 @@ export const FormAura = () => {
                     </p>
 
                     <p className="text-[8px] text-white/15">
-                      resultado generado
+                      aura.kodari.xyz
                     </p>
 
                   </div>
@@ -1082,14 +1322,78 @@ export const FormAura = () => {
 
                 <button
                   type="button"
-                  onClick={downloadImage}
-                  disabled={downloading}
-                  className="mt-3 w-full rounded-lg bg-[#5865F2] px-4 py-3.5 text-sm font-bold transition hover:bg-[#4752c4] disabled:opacity-50"
+                  onClick={
+                    shareResult
+                  }
+                  disabled={
+                    sharing
+                  }
+                  className="mt-3 w-full rounded-lg bg-[#5865F2] px-4 py-3.5 text-sm font-bold transition hover:bg-[#4752c4] active:scale-[0.99] disabled:opacity-50"
+                >
+                  {sharing
+                    ? "Preparando resultado..."
+                    : "📸 Compartir resultado"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={
+                    downloadImage
+                  }
+                  disabled={
+                    downloading
+                  }
+                  className="mt-2 w-full rounded-lg border border-white/[0.07] bg-[#111318] px-4 py-3 text-sm font-semibold text-white/60 transition hover:bg-[#16181f] hover:text-white disabled:opacity-50"
                 >
                   {downloading
                     ? "Preparando imagen..."
-                    : "Descargar resultado"}
+                    : "📥 Descargar imagen"}
                 </button>
+
+                <div className="mt-5 rounded-xl border border-white/[0.06] bg-[#111318] p-4">
+
+                  <div className="text-center">
+
+                    <p className="text-xs font-bold text-white/60">
+                      ¿Y vos?
+                    </p>
+
+                    <p className="mt-1 text-[10px] text-white/25">
+                      Compartí tu resultado
+                      y hacé que tus amigos
+                      descubran el suyo.
+                    </p>
+
+                  </div>
+
+                  <div className="mt-4 flex items-center gap-3">
+
+                    <div className="flex-1">
+
+                      <p className="text-[9px] font-bold tracking-[0.12em] text-white/20 uppercase">
+                        tu resultado
+                      </p>
+
+                      <p className="mt-1 truncate text-xs text-white/40">
+                        aura.kodari.xyz/?u=
+                        {
+                          profile.username
+                        }
+                      </p>
+
+                    </div>
+
+                    {qrCode && (
+                      <img
+                        src={qrCode}
+                        alt="Código QR del resultado"
+                        className="h-16 w-16 rounded-md"
+                      />
+                    )}
+
+                  </div>
+
+                </div>
 
                 <button
                   type="button"
@@ -1102,8 +1406,6 @@ export const FormAura = () => {
               </div>
             )}
 
-          </div>
-
         </div>
 
       </section>
@@ -1113,7 +1415,7 @@ export const FormAura = () => {
           ref={shareCardRef}
           style={{
             position: "fixed",
-            left: "-2000px",
+            left: "-3000px",
             top: "0",
             width: "1080px",
             height: "1920px",
@@ -1126,7 +1428,6 @@ export const FormAura = () => {
             overflow: "hidden",
             fontFamily:
               "Arial, Helvetica, sans-serif",
-            pointerEvents: "none",
           }}
         >
 
@@ -1503,7 +1804,10 @@ export const FormAura = () => {
                   profile.impact,
                 ],
               ].map(
-                ([name, value]) => (
+                ([
+                  name,
+                  value,
+                ]) => (
                   <div
                     key={name}
                     style={{
@@ -1608,30 +1912,45 @@ export const FormAura = () => {
             }}
           >
 
-            <p
-              style={{
-                margin: 0,
-                fontSize: "14px",
-                fontWeight: 900,
-                letterSpacing:
-                  "3px",
-                color:
-                  "#3d4047",
-              }}
-            >
-              AURA CHECK
-            </p>
+            <div>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "14px",
+                  fontWeight: 900,
+                  letterSpacing:
+                    "3px",
+                  color:
+                    "#3d4047",
+                }}
+              >
+                AURA CHECK
+              </p>
 
-            <p
-              style={{
-                margin: 0,
-                fontSize: "13px",
-                color:
-                  "#3d4047",
-              }}
-            >
-              resultado personal
-            </p>
+              <p
+                style={{
+                  margin:
+                    "6px 0 0",
+                  fontSize: "12px",
+                  color:
+                    "#3d4047",
+                }}
+              >
+                aura.kodari.xyz
+              </p>
+            </div>
+
+            {qrCode && (
+              <img
+                src={qrCode}
+                alt=""
+                style={{
+                  width: "105px",
+                  height: "105px",
+                  borderRadius: "8px",
+                }}
+              />
+            )}
 
           </div>
 

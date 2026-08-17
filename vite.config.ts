@@ -8,4 +8,5 @@ export default defineConfig({
     react(), tailwindcss(),
     babel({ presets: [reactCompilerPreset()] })
   ],
+  preview: {allowedHosts: true}
 })
