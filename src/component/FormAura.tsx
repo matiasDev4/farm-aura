@@ -1,5 +1,3 @@
-
-
 import { useEffect, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import QRCode from "qrcode";
@@ -76,8 +74,6 @@ const getNameQuality = (
 
   const vowels =
     clean.match(/[aeiou]/g) ?? [];
-
-
 
   if (!letters.length) {
     return 8;
@@ -323,9 +319,7 @@ const calculateProfile = (
   username: string
 ): AuraProfile => {
   const seed = hashString(username);
-
   const length = username.length;
-
 
   const numbers =
     username.match(/[0-9]/g) ?? [];
@@ -698,7 +692,7 @@ export const FormAura = () => {
         width: 1080,
         height: 1920,
         scale: 1,
-        backgroundColor: "#0b0c10",
+        backgroundColor: "#090a0e",
         logging: false,
         windowWidth: 1080,
         windowHeight: 1920,
@@ -818,9 +812,7 @@ export const FormAura = () => {
         return;
       }
 
-      if (
-        navigator.share
-      ) {
+      if (navigator.share) {
         await navigator.share({
           title: "Aura Check",
           text: shareText,
@@ -914,134 +906,135 @@ export const FormAura = () => {
     );
   };
 
+  const statItems = profile
+    ? [
+        ["ESTILO", profile.style],
+        ["PRESENCIA", profile.presence],
+        ["RAREZA", profile.rarity],
+        ["IMPACTO", profile.impact],
+      ]
+    : [];
+
   return (
-    <main className="relative min-h-[100svh] overflow-hidden bg-[#0b0c10] text-white">
+    <main className="relative min-h-[100svh] overflow-x-hidden bg-[#090a0e] text-white">
 
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(88,101,242,0.10),transparent_28%),radial-gradient(circle_at_100%_100%,rgba(250,204,21,0.05),transparent_30%)]" />
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(88,101,242,0.12),transparent_30%),radial-gradient(circle_at_100%_100%,rgba(250,204,21,0.06),transparent_32%)]" />
 
-      <section className="relative z-10 flex min-h-[100svh] items-center justify-center px-4 py-8">
+      <section className="relative z-10 flex min-h-[100svh] items-center justify-center px-4 py-8 sm:px-6">
 
-        <div className="w-full max-w-[430px]">
+        <div className="w-full max-w-[440px]">
 
-          {!profile &&
-            !loading && (
-              <div>
+          {!profile && !loading && (
+            <div>
 
-                <div className="mb-7">
+              <div className="mb-8">
 
-                  <div className="mb-5 flex items-center gap-3">
+                <div className="mb-6 flex items-center gap-3">
 
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#5865F2] text-sm font-black shadow-lg shadow-[#5865F2]/20">
-                      A
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-bold">
-                        Aura Check
-                      </p>
-
-                      <p className="text-[10px] text-white/25">
-                        análisis de presencia
-                      </p>
-                    </div>
-
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#5865F2] text-sm font-black shadow-lg shadow-[#5865F2]/25">
+                    A
                   </div>
 
-                  <h1 className="text-3xl font-black tracking-tight">
-                    ¿Cuánta aura
-                    <span className="block text-[#facc15]">
-                      tiene tu nombre?
-                    </span>
-                  </h1>
+                  <div>
+                    <p className="text-sm font-bold text-white">
+                      Aura Check
+                    </p>
 
-                  <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/35">
-                    Escribí tu usuario y
-                    descubrí qué tanta
-                    presencia tiene.
-                  </p>
+                    <p className="mt-0.5 text-[11px] text-white/40">
+                      análisis de presencia
+                    </p>
+                  </div>
 
                 </div>
 
-                <form
-                  onSubmit={
-                    checkAura
-                  }
-                  className="overflow-hidden rounded-xl border border-white/[0.07] bg-[#111318] shadow-2xl"
-                >
+                <h1 className="text-[32px] font-black leading-[1.05] tracking-[-0.04em] text-white">
+                  ¿Cuánta aura
+                  <span className="block text-[#facc15]">
+                    tiene tu nombre?
+                  </span>
+                </h1>
 
-                  <div className="flex items-center gap-3 border-b border-white/[0.06] bg-[#16181f] px-4 py-3">
-
-                    <span className="h-2 w-2 rounded-full bg-[#23a55a]" />
-
-                    <span className="text-[10px] font-bold tracking-[0.15em] text-white/30 uppercase">
-                      ingresar usuario
-                    </span>
-
-                  </div>
-
-                  <div className="p-4">
-
-                    <label
-                      htmlFor="username"
-                      className="mb-2 block text-xs font-semibold text-white/45"
-                    >
-                      Tu nombre
-                    </label>
-
-                    <div className="relative">
-
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-white/25">
-                        @
-                      </span>
-
-                      <input
-                        id="username"
-                        type="text"
-                        value={
-                          username
-                        }
-                        onChange={(
-                          e
-                        ) =>
-                          setUsername(
-                            e.target
-                              .value
-                          )
-                        }
-                        placeholder="maty.alvarez0k"
-                        autoComplete="off"
-                        className="w-full rounded-lg border border-white/[0.06] bg-[#0b0c10] py-3 pl-9 pr-4 text-sm outline-none transition placeholder:text-white/15 focus:border-[#5865F2]/60"
-                      />
-
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="mt-3 w-full rounded-lg bg-[#5865F2] px-4 py-3.5 text-sm font-bold transition hover:bg-[#4752c4] active:scale-[0.99]"
-                    >
-                      Ver mi aura
-                    </button>
-
-                  </div>
-
-                </form>
-
-                <p className="mt-4 text-center text-[10px] text-white/15">
-                  Cada nombre tiene una
-                  firma diferente.
+                <p className="mt-4 max-w-[390px] text-sm leading-6 text-white/50">
+                  Escribí tu usuario y
+                  descubrí qué tanta
+                  presencia tiene.
                 </p>
 
               </div>
-            )}
+
+              <form
+                onSubmit={checkAura}
+                className="overflow-hidden rounded-2xl border border-white/[0.09] bg-[#111318] shadow-2xl"
+              >
+
+                <div className="flex items-center gap-3 border-b border-white/[0.08] bg-[#171920] px-5 py-4">
+
+                  <span className="h-2 w-2 rounded-full bg-[#23a55a] shadow-[0_0_10px_rgba(35,165,90,0.5)]" />
+
+                  <span className="text-[10px] font-bold tracking-[0.15em] text-white/45 uppercase">
+                    ingresar usuario
+                  </span>
+
+                </div>
+
+                <div className="p-5">
+
+                  <label
+                    htmlFor="username"
+                    className="mb-2.5 block text-xs font-semibold text-white/60"
+                  >
+                    Tu nombre
+                  </label>
+
+                  <div className="relative">
+
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-white/35">
+                      @
+                    </span>
+
+                    <input
+                      id="username"
+                      type="text"
+                      value={username}
+                      onChange={(e) =>
+                        setUsername(
+                          e.target.value
+                        )
+                      }
+                      placeholder="maty.alvarez0k"
+                      autoComplete="off"
+                      className="w-full rounded-xl border border-white/[0.09] bg-[#0a0b0f] py-3.5 pl-9 pr-4 text-sm font-medium text-white outline-none transition placeholder:text-white/25 focus:border-[#5865F2]/70 focus:bg-[#0c0d12]"
+                    />
+
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="mt-3.5 w-full rounded-xl bg-[#5865F2] px-4 py-3.5 text-sm font-bold text-white transition hover:bg-[#4752c4] active:scale-[0.99]"
+                  >
+                    Ver mi aura
+                  </button>
+
+                </div>
+
+              </form>
+
+              <p className="mt-5 text-center text-[11px] text-white/30">
+                Cada nombre tiene una
+                firma diferente.
+              </p>
+
+            </div>
+          )}
 
           {loading && (
             <div className="flex min-h-[440px] flex-col items-center justify-center text-center">
 
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-[#5865F2]/[0.06]">
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-[#5865F2]/[0.08]">
 
                 <div className="absolute inset-1 animate-spin rounded-full border-2 border-transparent border-t-[#facc15]" />
 
-                <span className="text-xl font-black">
+                <span className="text-xl font-black text-white">
                   A
                 </span>
 
@@ -1051,355 +1044,310 @@ export const FormAura = () => {
                 analizando
               </p>
 
-              <p className="mt-2 text-sm text-white/25">
+              <p className="mt-2 text-sm text-white/45">
                 @{username}
               </p>
 
-              <p className="mt-7 text-xs text-white/20">
+              <p className="mt-7 text-xs text-white/30">
                 calculando presencia...
               </p>
 
             </div>
           )}
 
-          {profile &&
-            !loading && (
-              <div>
+          {profile && !loading && (
+            <div>
 
-                {fromSharedLink && (
-                  <div className="mb-3 rounded-lg border border-[#5865F2]/20 bg-[#5865F2]/[0.06] px-4 py-3 text-center">
+              {fromSharedLink && (
+                <div className="mb-4 rounded-xl border border-[#5865F2]/25 bg-[#5865F2]/[0.08] px-4 py-3.5 text-center">
 
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#8b7cf6] uppercase">
-                      te desafiaron
-                    </p>
+                  <p className="text-[10px] font-black tracking-[0.15em] text-[#9da5ff] uppercase">
+                    te desafiaron
+                  </p>
 
-                    <p className="mt-1 text-xs text-white/45">
-                      Este es el resultado
-                      de @{profile.username}
-                    </p>
+                  <p className="mt-1 text-xs text-white/55">
+                    Este es el resultado
+                    de @{profile.username}
+                  </p>
 
-                  </div>
-                )}
+                </div>
+              )}
 
-                <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-[#111318] shadow-2xl">
+              <div className="overflow-hidden rounded-2xl border border-white/[0.09] bg-[#111318] shadow-2xl">
 
-                  <div className="flex items-center justify-between border-b border-white/[0.06] bg-[#16181f] px-4 py-3">
+                <div className="flex items-center justify-between gap-4 border-b border-white/[0.08] bg-[#171920] px-5 py-4">
 
-                    <div className="flex items-center gap-3">
-
-                      <div
-                        className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-black"
-                        style={{
-                          backgroundColor:
-                            profile.accent,
-                        }}
-                      >
-                        {getInitials(
-                          profile.username
-                        )}
-                      </div>
-
-                      <div>
-                        <p className="text-sm font-bold">
-                          @
-                          {
-                            profile.username
-                          }
-                        </p>
-
-                        <p className="text-[10px] text-white/25">
-                          resultado personal
-                        </p>
-                      </div>
-
-                    </div>
-
-                    <span
-                      className="text-[9px] font-black tracking-[0.14em]"
-                      style={{
-                        color:
-                          profile.accent,
-                      }}
-                    >
-                      {
-                        profile.rank
-                      }
-                    </span>
-
-                  </div>
-
-                  <div className="relative px-5 py-6">
+                  <div className="flex min-w-0 items-center gap-3">
 
                     <div
-                      className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full blur-[90px]"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xs font-black text-white"
                       style={{
                         backgroundColor:
                           profile.accent,
-                        opacity: 0.08,
                       }}
-                    />
+                    >
+                      {getInitials(
+                        profile.username
+                      )}
+                    </div>
 
-                    <div className="relative">
+                    <div className="min-w-0">
 
-                      <div className="flex items-end justify-between">
+                      <p className="truncate text-sm font-bold text-white">
+                        @{profile.username}
+                      </p>
 
-                        <div>
+                      <p className="mt-0.5 text-[10px] text-white/35">
+                        resultado personal
+                      </p>
 
-                          <p className="text-[9px] font-bold tracking-[0.2em] text-white/25 uppercase">
-                            nivel de aura
-                          </p>
+                    </div>
 
-                          <div className="mt-1 flex items-end gap-3">
+                  </div>
 
-                            <span className="text-6xl font-black leading-none tracking-[-0.06em]">
-                              {formatAura(
-                                displayAura
-                              )}
-                            </span>
+                  <span
+                    className="shrink-0 text-[9px] font-black tracking-[0.14em]"
+                    style={{
+                      color:
+                        profile.accent,
+                    }}
+                  >
+                    {profile.rank}
+                  </span>
 
-                            <span className="pb-1 text-xs text-white/20">
-                              / 10.000
-                            </span>
+                </div>
 
-                          </div>
+                <div className="relative px-5 py-6 sm:px-6 sm:py-7">
 
-                        </div>
+                  <div
+                    className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full blur-[90px]"
+                    style={{
+                      backgroundColor:
+                        profile.accent,
+                      opacity: 0.1,
+                    }}
+                  />
 
-                        <div className="text-right">
+                  <div className="relative">
 
-                          <p
-                            className="text-xl font-black"
-                            style={{
-                              color:
-                                profile.accent,
-                            }}
-                          >
-                            {Math.round(
-                              (profile.aura /
-                                10000) *
-                                100
+                    <div className="flex items-end justify-between gap-4">
+
+                      <div className="min-w-0">
+
+                        <p className="text-[9px] font-bold tracking-[0.2em] text-white/35 uppercase">
+                          nivel de aura
+                        </p>
+
+                        <div className="mt-2 flex items-end gap-2">
+
+                          <span className="text-[52px] font-black leading-none tracking-[-0.06em] text-white sm:text-6xl">
+                            {formatAura(
+                              displayAura
                             )}
-                            %
-                          </p>
+                          </span>
 
-                          <p className="text-[9px] text-white/20">
-                            intensidad
-                          </p>
+                          <span className="pb-1 text-[11px] text-white/35">
+                            / 10.000
+                          </span>
 
                         </div>
 
                       </div>
 
-                      <div className="mt-5 h-2 overflow-hidden rounded-full bg-[#20232a]">
+                      <div className="shrink-0 text-right">
 
-                        <div
-                          className="h-full rounded-full transition-all"
+                        <p
+                          className="text-xl font-black"
                           style={{
-                            width: `${
-                              (displayAura /
-                                10000) *
-                              100
-                            }%`,
-                            background:
-                              "linear-gradient(90deg,#5865F2,#8b7cf6,#facc15)",
+                            color:
+                              profile.accent,
                           }}
-                        />
-
-                      </div>
-
-                      <div className="mt-5 rounded-lg bg-[#191b21] px-4 py-3.5">
-
-                        <p className="text-base font-black text-white/80">
-                          {
-                            profile.message
-                          }
+                        >
+                          {Math.round(
+                            (profile.aura /
+                              10000) *
+                              100
+                          )}
+                          %
                         </p>
 
-                        <p className="mt-1 text-[10px] text-white/25">
-                          {
-                            profile.rank
-                          }{" "}
-                          · firma
-                          de aura
+                        <p className="mt-1 text-[9px] font-medium text-white/30">
+                          intensidad
                         </p>
 
                       </div>
 
-                      <div className="mt-3 grid grid-cols-2 gap-2">
+                    </div>
 
-                        {[
-                          [
-                            "ESTILO",
-                            profile.style,
-                          ],
-                          [
-                            "PRESENCIA",
-                            profile.presence,
-                          ],
-                          [
-                            "RAREZA",
-                            profile.rarity,
-                          ],
-                          [
-                            "IMPACTO",
-                            profile.impact,
-                          ],
-                        ].map(
-                          ([
-                            name,
-                            value,
-                          ]) => (
-                            <div
-                              key={
-                                name
-                              }
-                              className="rounded-lg bg-[#191b21] px-3 py-2.5"
-                            >
+                    <div className="mt-6 h-2.5 overflow-hidden rounded-full bg-[#252830]">
 
-                              <div className="flex items-center justify-between">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${
+                            (displayAura /
+                              10000) *
+                            100
+                          }%`,
+                          background:
+                            "linear-gradient(90deg,#5865F2,#8b7cf6,#facc15)",
+                        }}
+                      />
 
-                                <p className="text-[8px] font-bold tracking-[0.12em] text-white/20">
-                                  {
-                                    name
-                                  }
-                                </p>
+                    </div>
 
-                                <p
-                                  className="text-[11px] font-black"
-                                  style={{
-                                    color:
-                                      profile.accent,
-                                  }}
-                                >
-                                  {
-                                    value
-                                  }
-                                </p>
+                    <div className="mt-6 rounded-xl border border-white/[0.05] bg-[#191b21] px-4 py-4">
 
-                              </div>
+                      <p className="text-[15px] font-black leading-5 text-white sm:text-base">
+                        {profile.message}
+                      </p>
 
-                              <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-[#292c34]">
+                      <p className="mt-2 text-[10px] font-medium text-white/35">
+                        {profile.rank} · firma
+                        de aura
+                      </p>
 
-                                <div
-                                  className="h-full rounded-full"
-                                  style={{
-                                    width: `${value}%`,
-                                    backgroundColor:
-                                      profile.accent,
-                                  }}
-                                />
+                    </div>
 
-                              </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2.5">
+
+                      {statItems.map(
+                        ([name, value]) => (
+                          <div
+                            key={name}
+                            className="rounded-xl border border-white/[0.04] bg-[#191b21] px-3.5 py-3"
+                          >
+
+                            <div className="flex items-center justify-between gap-2">
+
+                              <p className="text-[8px] font-bold tracking-[0.12em] text-white/35">
+                                {name}
+                              </p>
+
+                              <p
+                                className="text-xs font-black"
+                                style={{
+                                  color:
+                                    profile.accent,
+                                }}
+                              >
+                                {value}
+                              </p>
 
                             </div>
-                          )
-                        )}
 
-                      </div>
+                            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#292c34]">
+
+                              <div
+                                className="h-full rounded-full"
+                                style={{
+                                  width: `${value}%`,
+                                  backgroundColor:
+                                    profile.accent,
+                                }}
+                              />
+
+                            </div>
+
+                          </div>
+                        )
+                      )}
 
                     </div>
-
-                  </div>
-
-                  <div className="flex items-center justify-between border-t border-white/[0.06] bg-[#0e0f13] px-4 py-2.5">
-
-                    <p className="text-[8px] font-black tracking-[0.2em] text-white/15">
-                      AURA CHECK
-                    </p>
-
-                    <p className="text-[8px] text-white/15">
-                      aura.kodari.xyz
-                    </p>
 
                   </div>
 
                 </div>
 
-                <button
-                  type="button"
-                  onClick={
-                    shareResult
-                  }
-                  disabled={
-                    sharing
-                  }
-                  className="mt-3 w-full rounded-lg bg-[#5865F2] px-4 py-3.5 text-sm font-bold transition hover:bg-[#4752c4] active:scale-[0.99] disabled:opacity-50"
-                >
-                  {sharing
-                    ? "Preparando resultado..."
-                    : "📸 Compartir resultado"}
-                </button>
+                <div className="flex items-center justify-between border-t border-white/[0.07] bg-[#0e0f13] px-5 py-3">
 
-                <button
-                  type="button"
-                  onClick={
-                    downloadImage
-                  }
-                  disabled={
-                    downloading
-                  }
-                  className="mt-2 w-full rounded-lg border border-white/[0.07] bg-[#111318] px-4 py-3 text-sm font-semibold text-white/60 transition hover:bg-[#16181f] hover:text-white disabled:opacity-50"
-                >
-                  {downloading
-                    ? "Preparando imagen..."
-                    : "📥 Descargar imagen"}
-                </button>
+                  <p className="text-[8px] font-black tracking-[0.2em] text-white/25">
+                    AURA CHECK
+                  </p>
 
-                <div className="mt-5 rounded-xl border border-white/[0.06] bg-[#111318] p-4">
-
-                  <div className="text-center">
-
-                    <p className="text-xs font-bold text-white/60">
-                      ¿Y vos?
-                    </p>
-
-                    <p className="mt-1 text-[10px] text-white/25">
-                      Compartí tu resultado
-                      y hacé que tus amigos
-                      descubran el suyo.
-                    </p>
-
-                  </div>
-
-                  <div className="mt-4 flex items-center gap-3">
-
-                    <div className="flex-1">
-
-                      <p className="text-[9px] font-bold tracking-[0.12em] text-white/20 uppercase">
-                        tu resultado
-                      </p>
-
-                      <p className="mt-1 truncate text-xs text-white/40">
-                        aura.kodari.xyz/?u=
-                        {
-                          profile.username
-                        }
-                      </p>
-
-                    </div>
-
-                    {qrCode && (
-                      <img
-                        src={qrCode}
-                        alt="Código QR del resultado"
-                        className="h-16 w-16 rounded-md"
-                      />
-                    )}
-
-                  </div>
+                  <p className="text-[8px] font-medium text-white/25">
+                    aura.kodari.xyz
+                  </p>
 
                 </div>
-
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="mt-1 w-full py-3 text-xs text-white/25 transition hover:text-white/60"
-                >
-                  Probar otro nombre
-                </button>
 
               </div>
-            )}
+
+              <button
+                type="button"
+                onClick={shareResult}
+                disabled={sharing}
+                className="mt-4 w-full rounded-xl bg-[#5865F2] px-4 py-3.5 text-sm font-bold text-white transition hover:bg-[#4752c4] active:scale-[0.99] disabled:opacity-50"
+              >
+                {sharing
+                  ? "Preparando resultado..."
+                  : "📸 Compartir resultado"}
+              </button>
+
+              <button
+                type="button"
+                onClick={downloadImage}
+                disabled={downloading}
+                className="mt-2.5 w-full rounded-xl border border-white/[0.09] bg-[#111318] px-4 py-3.5 text-sm font-semibold text-white/65 transition hover:bg-[#171920] hover:text-white disabled:opacity-50"
+              >
+                {downloading
+                  ? "Preparando imagen..."
+                  : "📥 Descargar imagen"}
+              </button>
+
+              <div className="mt-5 rounded-2xl border border-white/[0.08] bg-[#111318] p-5">
+
+                <div className="text-center">
+
+                  <p className="text-sm font-bold text-white/75">
+                    ¿Y vos?
+                  </p>
+
+                  <p className="mt-1.5 text-[11px] leading-5 text-white/40">
+                    Compartí tu resultado
+                    y hacé que tus amigos
+                    descubran el suyo.
+                  </p>
+
+                </div>
+
+                <div className="mt-5 flex items-center gap-4">
+
+                  <div className="min-w-0 flex-1">
+
+                    <p className="text-[9px] font-bold tracking-[0.12em] text-white/30 uppercase">
+                      tu resultado
+                    </p>
+
+                    <p className="mt-1.5 truncate text-xs text-white/50">
+                      aura.kodari.xyz/?u=
+                      {profile.username}
+                    </p>
+
+                  </div>
+
+                  {qrCode && (
+                    <img
+                      src={qrCode}
+                      alt="Código QR del resultado"
+                      className="h-[68px] w-[68px] shrink-0 rounded-lg"
+                    />
+                  )}
+
+                </div>
+
+              </div>
+
+              <button
+                type="button"
+                onClick={reset}
+                className="mt-2 w-full py-3 text-xs font-medium text-white/30 transition hover:text-white/65"
+              >
+                Probar otro nombre
+              </button>
+
+            </div>
+          )}
 
         </div>
 
@@ -1414,12 +1362,11 @@ export const FormAura = () => {
             top: "0",
             width: "1080px",
             height: "1920px",
-            backgroundColor: "#0b0c10",
+            backgroundColor: "#090a0e",
             color: "#fff",
-            padding: "70px",
+            padding: "64px",
             display: "flex",
             flexDirection: "column",
-            justifyContent: "space-between",
             overflow: "hidden",
             fontFamily:
               "Arial, Helvetica, sans-serif",
@@ -1429,15 +1376,30 @@ export const FormAura = () => {
           <div
             style={{
               position: "absolute",
-              width: "700px",
-              height: "700px",
+              width: "800px",
+              height: "800px",
               borderRadius: "50%",
               backgroundColor:
                 profile.accent,
-              opacity: 0.07,
-              filter: "blur(160px)",
-              top: "-300px",
-              right: "-250px",
+              opacity: 0.08,
+              filter: "blur(170px)",
+              top: "-380px",
+              right: "-280px",
+            }}
+          />
+
+          <div
+            style={{
+              position: "absolute",
+              width: "600px",
+              height: "600px",
+              borderRadius: "50%",
+              backgroundColor:
+                "#5865F2",
+              opacity: 0.045,
+              filter: "blur(150px)",
+              bottom: "-300px",
+              left: "-250px",
             }}
           />
 
@@ -1447,96 +1409,12 @@ export const FormAura = () => {
               zIndex: 2,
               display: "flex",
               alignItems: "center",
-              justifyContent:
-                "space-between",
-              padding:
-                "25px 30px",
-              borderRadius: "18px",
-              backgroundColor:
-                "#16181f",
+              justifyContent: "space-between",
+              padding: "28px 32px",
+              borderRadius: "22px",
+              backgroundColor: "#16181f",
               border:
-                "1px solid rgba(255,255,255,0.07)",
-            }}
-          >
-
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "16px",
-              }}
-            >
-
-              <div
-                style={{
-                  width: "58px",
-                  height: "58px",
-                  borderRadius: "15px",
-                  backgroundColor:
-                    profile.accent,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent:
-                    "center",
-                  fontSize: "27px",
-                  fontWeight: 900,
-                }}
-              >
-                A
-              </div>
-
-              <div>
-
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "27px",
-                    fontWeight: 900,
-                  }}
-                >
-                  Aura Check
-                </p>
-
-                <p
-                  style={{
-                    margin:
-                      "4px 0 0",
-                    fontSize: "15px",
-                    color: "#666a72",
-                  }}
-                >
-                  análisis de presencia
-                </p>
-
-              </div>
-
-            </div>
-
-            <p
-              style={{
-                margin: 0,
-                fontSize: "15px",
-                fontWeight: 900,
-                letterSpacing: "2px",
-                color:
-                  profile.accent,
-              }}
-            >
-              {profile.rank}
-            </p>
-
-          </div>
-
-          <div
-            style={{
-              position: "relative",
-              zIndex: 2,
-              padding: "42px",
-              borderRadius: "20px",
-              backgroundColor:
-                "#111318",
-              border:
-                "1px solid rgba(255,255,255,0.07)",
+                "1px solid rgba(255,255,255,0.09)",
             }}
           >
 
@@ -1550,18 +1428,108 @@ export const FormAura = () => {
 
               <div
                 style={{
-                  width: "68px",
-                  height: "68px",
+                  width: "62px",
+                  height: "62px",
+                  borderRadius: "17px",
+                  backgroundColor:
+                    profile.accent,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "29px",
+                  fontWeight: 900,
+                  color: "#ffffff",
+                }}
+              >
+                A
+              </div>
+
+              <div>
+
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: "28px",
+                    lineHeight: 1.1,
+                    fontWeight: 900,
+                    color: "#ffffff",
+                  }}
+                >
+                  Aura Check
+                </p>
+
+                <p
+                  style={{
+                    margin: "7px 0 0",
+                    fontSize: "15px",
+                    fontWeight: 600,
+                    color: "#9da1aa",
+                  }}
+                >
+                  análisis de presencia
+                </p>
+
+              </div>
+
+            </div>
+
+            <div
+              style={{
+                padding: "10px 16px",
+                borderRadius: "999px",
+                backgroundColor:
+                  "rgba(255,255,255,0.04)",
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "14px",
+                  fontWeight: 900,
+                  letterSpacing: "2px",
+                  color: profile.accent,
+                }}
+              >
+                {profile.rank}
+              </p>
+            </div>
+
+          </div>
+
+          <div
+            style={{
+              position: "relative",
+              zIndex: 2,
+              marginTop: "38px",
+              padding: "46px",
+              borderRadius: "24px",
+              backgroundColor: "#111318",
+              border:
+                "1px solid rgba(255,255,255,0.09)",
+            }}
+          >
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "20px",
+              }}
+            >
+
+              <div
+                style={{
+                  width: "76px",
+                  height: "76px",
                   borderRadius: "50%",
                   backgroundColor:
                     profile.accent,
                   display: "flex",
-                  alignItems:
-                    "center",
-                  justifyContent:
-                    "center",
-                  fontSize: "22px",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "24px",
                   fontWeight: 900,
+                  color: "#ffffff",
                 }}
               >
                 {getInitials(
@@ -1574,8 +1542,10 @@ export const FormAura = () => {
                 <p
                   style={{
                     margin: 0,
-                    fontSize: "28px",
+                    fontSize: "31px",
+                    lineHeight: 1.1,
                     fontWeight: 900,
+                    color: "#ffffff",
                   }}
                 >
                   @{profile.username}
@@ -1583,10 +1553,10 @@ export const FormAura = () => {
 
                 <p
                   style={{
-                    margin:
-                      "5px 0 0",
+                    margin: "8px 0 0",
                     fontSize: "15px",
-                    color: "#666a72",
+                    fontWeight: 600,
+                    color: "#8f939c",
                   }}
                 >
                   firma de aura
@@ -1598,7 +1568,7 @@ export const FormAura = () => {
 
             <div
               style={{
-                marginTop: "55px",
+                marginTop: "62px",
               }}
             >
 
@@ -1608,7 +1578,7 @@ export const FormAura = () => {
                   fontSize: "14px",
                   fontWeight: 900,
                   letterSpacing: "3px",
-                  color: "#666a72",
+                  color: "#8f939c",
                 }}
               >
                 NIVEL DE AURA
@@ -1618,19 +1588,19 @@ export const FormAura = () => {
                 style={{
                   display: "flex",
                   alignItems: "baseline",
-                  gap: "18px",
+                  gap: "22px",
+                  marginTop: "13px",
                 }}
               >
 
                 <p
                   style={{
-                    margin:
-                      "12px 0 0",
-                    fontSize: "145px",
-                    lineHeight: 0.9,
+                    margin: 0,
+                    fontSize: "142px",
+                    lineHeight: 0.95,
                     fontWeight: 900,
-                    letterSpacing:
-                      "-8px",
+                    letterSpacing: "-7px",
+                    color: "#ffffff",
                   }}
                 >
                   {formatAura(
@@ -1641,8 +1611,9 @@ export const FormAura = () => {
                 <p
                   style={{
                     margin: 0,
-                    fontSize: "20px",
-                    color: "#555963",
+                    fontSize: "21px",
+                    fontWeight: 600,
+                    color: "#727680",
                   }}
                 >
                   / 10.000
@@ -1650,36 +1621,52 @@ export const FormAura = () => {
 
               </div>
 
-              <p
+              <div
                 style={{
-                  margin:
-                    "18px 0 0",
-                  fontSize: "38px",
-                  fontWeight: 900,
-                  letterSpacing: "4px",
-                  color:
-                    profile.accent,
+                  marginTop: "18px",
+                  display: "inline-flex",
+                  padding:
+                    "8px 14px",
+                  borderRadius:
+                    "999px",
+                  backgroundColor:
+                    "rgba(255,255,255,0.04)",
                 }}
               >
-                AURA
-              </p>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: "15px",
+                    fontWeight: 900,
+                    letterSpacing: "2px",
+                    color:
+                      profile.accent,
+                  }}
+                >
+                  {Math.round(
+                    (profile.aura /
+                      10000) *
+                      100
+                  )}
+                  % INTENSIDAD
+                </p>
+              </div>
 
             </div>
 
             <div
               style={{
-                marginTop: "45px",
+                marginTop: "48px",
               }}
             >
 
               <div
                 style={{
                   width: "100%",
-                  height: "12px",
-                  borderRadius:
-                    "999px",
+                  height: "14px",
+                  borderRadius: "999px",
                   backgroundColor:
-                    "#24262d",
+                    "#292c34",
                   overflow: "hidden",
                 }}
               >
@@ -1692,8 +1679,7 @@ export const FormAura = () => {
                       100
                     }%`,
                     height: "100%",
-                    borderRadius:
-                      "999px",
+                    borderRadius: "999px",
                     background:
                       "linear-gradient(90deg,#5865F2,#8b7cf6,#facc15)",
                   }}
@@ -1707,51 +1693,39 @@ export const FormAura = () => {
                   justifyContent:
                     "space-between",
                   marginTop: "12px",
-                  fontSize: "14px",
-                  color: "#555963",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: "#737781",
                 }}
               >
-
                 <span>0</span>
-
-                <span
-                  style={{
-                    color:
-                      profile.accent,
-                    fontWeight: 900,
-                  }}
-                >
-                  {Math.round(
-                    (profile.aura /
-                      10000) *
-                      100
-                  )}
-                  %
-                </span>
 
                 <span>
                   10.000
                 </span>
-
               </div>
 
             </div>
 
             <div
               style={{
-                marginTop: "40px",
-                padding: "23px",
-                borderRadius: "13px",
+                marginTop: "44px",
+                padding: "28px 30px",
+                borderRadius: "16px",
                 backgroundColor:
                   "#191b21",
+                border:
+                  "1px solid rgba(255,255,255,0.05)",
               }}
             >
 
               <p
                 style={{
                   margin: 0,
-                  fontSize: "27px",
+                  fontSize: "29px",
+                  lineHeight: 1.25,
                   fontWeight: 900,
+                  color: "#ffffff",
                 }}
               >
                 {profile.message}
@@ -1759,14 +1733,13 @@ export const FormAura = () => {
 
               <p
                 style={{
-                  margin:
-                    "7px 0 0",
+                  margin: "10px 0 0",
                   fontSize: "14px",
-                  color: "#666a72",
+                  fontWeight: 600,
+                  color: "#8f939c",
                 }}
               >
-                {profile.rank} · firma
-                de aura
+                {profile.rank} · firma de aura
               </p>
 
             </div>
@@ -1776,42 +1749,24 @@ export const FormAura = () => {
                 display: "grid",
                 gridTemplateColumns:
                   "1fr 1fr",
-                gap: "10px",
-                marginTop: "10px",
+                gap: "14px",
+                marginTop: "14px",
               }}
             >
 
-              {[
-                [
-                  "ESTILO",
-                  profile.style,
-                ],
-                [
-                  "PRESENCIA",
-                  profile.presence,
-                ],
-                [
-                  "RAREZA",
-                  profile.rarity,
-                ],
-                [
-                  "IMPACTO",
-                  profile.impact,
-                ],
-              ].map(
-                ([
-                  name,
-                  value,
-                ]) => (
+              {statItems.map(
+                ([name, value]) => (
                   <div
                     key={name}
                     style={{
                       padding:
-                        "18px",
+                        "20px",
                       borderRadius:
-                        "11px",
+                        "14px",
                       backgroundColor:
                         "#191b21",
+                      border:
+                        "1px solid rgba(255,255,255,0.04)",
                     }}
                   >
 
@@ -1819,8 +1774,11 @@ export const FormAura = () => {
                       style={{
                         display:
                           "flex",
+                        alignItems:
+                          "center",
                         justifyContent:
                           "space-between",
+                        gap: "12px",
                       }}
                     >
 
@@ -1829,11 +1787,12 @@ export const FormAura = () => {
                           margin: 0,
                           fontSize:
                             "11px",
-                          fontWeight: 900,
+                          fontWeight:
+                            900,
                           letterSpacing:
                             "1.5px",
                           color:
-                            "#555963",
+                            "#858992",
                         }}
                       >
                         {name}
@@ -1843,8 +1802,9 @@ export const FormAura = () => {
                         style={{
                           margin: 0,
                           fontSize:
-                            "14px",
-                          fontWeight: 900,
+                            "17px",
+                          fontWeight:
+                            900,
                           color:
                             profile.accent,
                         }}
@@ -1857,13 +1817,13 @@ export const FormAura = () => {
                     <div
                       style={{
                         marginTop:
-                          "9px",
+                          "11px",
                         height:
-                          "5px",
+                          "6px",
                         borderRadius:
                           "999px",
                         backgroundColor:
-                          "#292c34",
+                          "#2b2e36",
                         overflow:
                           "hidden",
                       }}
@@ -1896,27 +1856,24 @@ export const FormAura = () => {
               position: "relative",
               zIndex: 2,
               display: "flex",
-              alignItems:
-                "center",
-              justifyContent:
-                "space-between",
-              padding:
-                "20px 25px",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: "auto",
+              paddingTop: "34px",
               borderTop:
-                "1px solid rgba(255,255,255,0.06)",
+                "1px solid rgba(255,255,255,0.08)",
             }}
           >
 
             <div>
+
               <p
                 style={{
                   margin: 0,
-                  fontSize: "14px",
+                  fontSize: "15px",
                   fontWeight: 900,
-                  letterSpacing:
-                    "3px",
-                  color:
-                    "#3d4047",
+                  letterSpacing: "3px",
+                  color: "#6e727b",
                 }}
               >
                 AURA CHECK
@@ -1924,27 +1881,36 @@ export const FormAura = () => {
 
               <p
                 style={{
-                  margin:
-                    "6px 0 0",
-                  fontSize: "12px",
-                  color:
-                    "#3d4047",
+                  margin: "7px 0 0",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: "#555963",
                 }}
               >
                 aura.kodari.xyz
               </p>
+
             </div>
 
             {qrCode && (
-              <img
-                src={qrCode}
-                alt=""
+              <div
                 style={{
-                  width: "105px",
-                  height: "105px",
-                  borderRadius: "8px",
+                  padding: "10px",
+                  borderRadius: "12px",
+                  backgroundColor:
+                    "#ffffff",
                 }}
-              />
+              >
+                <img
+                  src={qrCode}
+                  alt=""
+                  style={{
+                    display: "block",
+                    width: "110px",
+                    height: "110px",
+                  }}
+                />
+              </div>
             )}
 
           </div>
