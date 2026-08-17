@@ -77,10 +77,7 @@ const getNameQuality = (
   const vowels =
     clean.match(/[aeiou]/g) ?? [];
 
-  const consonants =
-    clean.match(
-      /[bcdfghjklmnpqrstvwxyz]/g
-    ) ?? [];
+
 
   if (!letters.length) {
     return 8;
@@ -329,8 +326,6 @@ const calculateProfile = (
 
   const length = username.length;
 
-  const letters =
-    username.match(/[a-z]/gi) ?? [];
 
   const numbers =
     username.match(/[0-9]/g) ?? [];
