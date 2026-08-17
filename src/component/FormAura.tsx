@@ -678,129 +678,98 @@ export const FormAura = () => {
   }, [profile]);
 
   const createCanvas = async () => {
-    if (!shareCardRef.current) {
-      return null;
+    const element = shareCardRef.current;
+
+    if (!element) {
+      throw new Error("No se encontró la card de resultado.");
     }
 
-    await new Promise((resolve) =>
-      setTimeout(resolve, 200)
-    );
+    if (document.fonts?.ready) {
+      await document.fonts.ready;
+    }
 
-    return html2canvas(
-      shareCardRef.current,
-      {
-        width: 1080,
-        height: 1920,
-        scale: 1,
-        backgroundColor: "#090a0e",
-        logging: false,
-        useCORS: true,
-        allowTaint: false,
-      }
-    );
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => resolve());
+      });
+    });
+
+    return html2canvas(element, {
+      backgroundColor: "#111318",
+      scale: 3,
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+    });
   };
 
   const downloadImage = async () => {
-    if (
-      !profile ||
-      downloading
-    ) {
+    if (!profile || downloading) {
       return;
     }
 
     try {
       setDownloading(true);
 
-      const canvas =
-        await createCanvas();
+      const canvas = await createCanvas();
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, "image/png", 1);
+      });
 
-      if (!canvas) {
-        return;
+      if (!blob) {
+        throw new Error("No se pudo generar el PNG.");
       }
 
-      const dataUrl =
-        canvas.toDataURL(
-          "image/png"
-        );
-
-      const link =
-        document.createElement("a");
-
-      link.href = dataUrl;
-      link.download =
-        `aura-${profile.username}.png`;
-
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `aura-${profile.username}.png`;
+      link.style.display = "none";
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
+
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) {
-      console.error(
-        "No se pudo generar la imagen:",
-        error
-      );
+      console.error("No se pudo descargar la imagen:", error);
     } finally {
       setDownloading(false);
     }
   };
 
   const shareResult = async () => {
-    if (
-      !profile ||
-      sharing
-    ) {
+    if (!profile || sharing) {
       return;
     }
 
     try {
       setSharing(true);
 
-      const canvas =
-        await createCanvas();
-
-      if (!canvas) {
-        return;
-      }
-
-      const blob =
-        await new Promise<Blob | null>(
-          (resolve) =>
-            canvas.toBlob(
-              resolve,
-              "image/png"
-            )
-        );
+      const canvas = await createCanvas();
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, "image/png", 1);
+      });
 
       if (!blob) {
-        return;
+        throw new Error("No se pudo generar el PNG.");
       }
 
-      const file =
-        new File(
-          [
-            blob,
-          ],
-          `aura-${profile.username}.png`,
-          {
-            type: "image/png",
-          }
-        );
+      const file = new File(
+        [blob],
+        `aura-${profile.username}.png`,
+        { type: "image/png" }
+      );
 
-      const shareUrl =
-        getProfileUrl(
-          profile.username
-        );
-
+      const shareUrl = getProfileUrl(profile.username);
       const shareText =
-        `@${profile.username} tiene ${formatAura(
-          profile.aura
-        )} de aura 🗿 ¿Cuánto tenés vos?`;
+        `@${profile.username} tiene ${formatAura(profile.aura)} de aura 🗿 ¿Cuánto tenés vos?`;
 
       if (
-        navigator.share &&
-        navigator.canShare &&
-        navigator.canShare({
-          files: [file],
-        })
+        typeof navigator.share === "function" &&
+        typeof navigator.canShare === "function" &&
+        navigator.canShare({ files: [file] })
       ) {
         await navigator.share({
           title: "Aura Check",
@@ -808,48 +777,34 @@ export const FormAura = () => {
           url: shareUrl,
           files: [file],
         });
-
         return;
       }
 
-      if (navigator.share) {
+      if (typeof navigator.share === "function") {
         await navigator.share({
           title: "Aura Check",
           text: shareText,
           url: shareUrl,
         });
-
         return;
       }
 
-      const link =
-        document.createElement("a");
-
-      link.href =
-        URL.createObjectURL(blob);
-
-      link.download =
-        `aura-${profile.username}.png`;
-
+      // Desktop browsers sin Web Share: descargar como fallback.
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `aura-${profile.username}.png`;
+      link.style.display = "none";
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(
-        link.href
-      );
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.name === "AbortError"
-      ) {
+      if (error instanceof Error && error.name === "AbortError") {
         return;
       }
 
-      console.error(
-        "No se pudo compartir:",
-        error
-      );
+      console.error("No se pudo compartir:", error);
     } finally {
       setSharing(false);
     }
@@ -1049,7 +1004,10 @@ export const FormAura = () => {
                 </div>
               )}
 
-              <div className="overflow-hidden rounded-2xl border border-white/[0.09] bg-[#111318] shadow-2xl">
+              <div
+                ref={shareCardRef}
+                className="overflow-hidden rounded-2xl border border-white/[0.09] bg-[#111318] shadow-2xl"
+              >
                 <div className="flex items-center justify-between gap-4 border-b border-white/[0.08] bg-[#171920] px-5 py-4">
                   <div className="flex min-w-0 items-center gap-3">
                     <div
@@ -1284,767 +1242,6 @@ export const FormAura = () => {
         </div>
       </section>
 
-      {profile && (
-        <div
-          ref={shareCardRef}
-          style={{
-            position: "fixed",
-            left: "-3000px",
-            top: "0",
-            width: "1080px",
-            height: "1920px",
-            boxSizing: "border-box",
-            background: "#090a0e",
-            color: "#fff",
-            padding: "64px",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            fontFamily:
-              "Arial, Helvetica, sans-serif",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              width: "760px",
-              height: "760px",
-              borderRadius: "50%",
-              background:
-                profile.accent,
-              opacity: 0.08,
-              filter: "blur(160px)",
-              top: "-360px",
-              right: "-260px",
-            }}
-          />
-
-          <div
-            style={{
-              position: "absolute",
-              width: "620px",
-              height: "620px",
-              borderRadius: "50%",
-              background: "#5865F2",
-              opacity: 0.04,
-              filter: "blur(150px)",
-              bottom: "-300px",
-              left: "-260px",
-            }}
-          />
-
-          <div
-            style={{
-              position: "relative",
-              zIndex: 2,
-              width: "100%",
-              height: "118px",
-              minHeight: "118px",
-              boxSizing: "border-box",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "0 30px",
-              borderRadius: "22px",
-              background: "#16181f",
-              border:
-                "1px solid rgba(255,255,255,0.09)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                height: "100%",
-                gap: "18px",
-              }}
-            >
-              <div
-                style={{
-                  width: "62px",
-                  height: "62px",
-                  minWidth: "62px",
-                  borderRadius: "17px",
-                  background:
-                    profile.accent,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  textAlign: "center",
-                  fontSize: "29px",
-                  lineHeight: "62px",
-                  fontWeight: 900,
-                  color: "#fff",
-                }}
-              >
-                A
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection:
-                    "column",
-                  justifyContent:
-                    "center",
-                }}
-              >
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "28px",
-                    lineHeight: "32px",
-                    fontWeight: 900,
-                    color: "#fff",
-                  }}
-                >
-                  Aura Check
-                </p>
-
-                <p
-                  style={{
-                    margin: "7px 0 0",
-                    fontSize: "15px",
-                    lineHeight: "19px",
-                    fontWeight: 600,
-                    color: "#9da1aa",
-                  }}
-                >
-                  análisis de presencia
-                </p>
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent:
-                  "center",
-                height: "40px",
-                padding: "0 17px",
-                borderRadius: "999px",
-                background:
-                  "rgba(255,255,255,0.045)",
-              }}
-            >
-              <span
-                style={{
-                  display: "block",
-                  fontSize: "13px",
-                  lineHeight: "16px",
-                  fontWeight: 900,
-                  letterSpacing: "2px",
-                  color:
-                    profile.accent,
-                }}
-              >
-                {profile.rank}
-              </span>
-            </div>
-          </div>
-
-          <div
-            style={{
-              position: "relative",
-              zIndex: 2,
-              width: "100%",
-              height: "1450px",
-              minHeight: "1450px",
-              marginTop: "34px",
-              boxSizing: "border-box",
-              padding: "44px",
-              borderRadius: "26px",
-              background: "#111318",
-              border:
-                "1px solid rgba(255,255,255,0.09)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                width: "100%",
-                height: "88px",
-              }}
-            >
-              <div
-                style={{
-                  width: "82px",
-                  height: "82px",
-                  minWidth: "82px",
-                  borderRadius: "50%",
-                  background:
-                    profile.accent,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  textAlign: "center",
-                  fontSize: "26px",
-                  lineHeight: "82px",
-                  fontWeight: 900,
-                  color: "#fff",
-                }}
-              >
-                {getInitials(
-                  profile.username
-                )}
-              </div>
-
-              <div
-                style={{
-                  marginLeft: "20px",
-                  minWidth: 0,
-                  maxWidth: "700px",
-                  display: "flex",
-                  flexDirection:
-                    "column",
-                  justifyContent:
-                    "center",
-                }}
-              >
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "32px",
-                    lineHeight: "38px",
-                    fontWeight: 900,
-                    color: "#fff",
-                    whiteSpace:
-                      "nowrap",
-                    overflow: "hidden",
-                    textOverflow:
-                      "ellipsis",
-                  }}
-                >
-                  @{profile.username}
-                </p>
-
-                <p
-                  style={{
-                    margin: "7px 0 0",
-                    fontSize: "15px",
-                    lineHeight: "20px",
-                    fontWeight: 600,
-                    color: "#8f939c",
-                  }}
-                >
-                  firma de aura
-                </p>
-              </div>
-            </div>
-
-            <div
-              style={{
-                marginTop: "62px",
-                width: "100%",
-              }}
-            >
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "14px",
-                  lineHeight: "18px",
-                  fontWeight: 900,
-                  letterSpacing: "3px",
-                  color: "#8f939c",
-                }}
-              >
-                NIVEL DE AURA
-              </p>
-
-              <div
-                style={{
-                  display: "flex",
-                  alignItems:
-                    "flex-end",
-                  width: "100%",
-                  marginTop: "12px",
-                }}
-              >
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "126px",
-                    lineHeight: "126px",
-                    fontWeight: 900,
-                    letterSpacing:
-                      "-6px",
-                    color: "#fff",
-                  }}
-                >
-                  {formatAura(
-                    profile.aura
-                  )}
-                </p>
-
-                <p
-                  style={{
-                    margin:
-                      "0 0 10px 20px",
-                    fontSize: "20px",
-                    lineHeight: "24px",
-                    fontWeight: 600,
-                    color: "#727680",
-                    whiteSpace:
-                      "nowrap",
-                  }}
-                >
-                  / 10.000
-                </p>
-              </div>
-
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems:
-                    "center",
-                  justifyContent:
-                    "center",
-                  height: "38px",
-                  marginTop: "18px",
-                  padding: "0 15px",
-                  borderRadius:
-                    "999px",
-                  background:
-                    "rgba(255,255,255,0.04)",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "14px",
-                    lineHeight:
-                      "18px",
-                    fontWeight: 900,
-                    letterSpacing:
-                      "2px",
-                    color:
-                      profile.accent,
-                  }}
-                >
-                  {Math.round(
-                    (profile.aura /
-                      10000) *
-                      100
-                  )}
-                  % INTENSIDAD
-                </span>
-              </div>
-            </div>
-
-            <div
-              style={{
-                width: "100%",
-                marginTop: "48px",
-              }}
-            >
-              <div
-                style={{
-                  width: "100%",
-                  height: "14px",
-                  borderRadius:
-                    "999px",
-                  background:
-                    "#292c34",
-                  overflow:
-                    "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    width: `${
-                      (profile.aura /
-                        10000) *
-                      100
-                    }%`,
-                    height: "14px",
-                    borderRadius:
-                      "999px",
-                    background:
-                      "linear-gradient(90deg,#5865F2,#8b7cf6,#facc15)",
-                  }}
-                />
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent:
-                    "space-between",
-                  marginTop: "11px",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "13px",
-                    lineHeight:
-                      "17px",
-                    fontWeight: 600,
-                    color: "#737781",
-                  }}
-                >
-                  0
-                </span>
-
-                <span
-                  style={{
-                    fontSize: "13px",
-                    lineHeight:
-                      "17px",
-                    fontWeight: 600,
-                    color: "#737781",
-                  }}
-                >
-                  10.000
-                </span>
-              </div>
-            </div>
-
-            <div
-              style={{
-                width: "100%",
-                minHeight: "150px",
-                marginTop: "44px",
-                padding:
-                  "25px 28px",
-                boxSizing:
-                  "border-box",
-                borderRadius:
-                  "17px",
-                background:
-                  "#191b21",
-                border:
-                  "1px solid rgba(255,255,255,0.05)",
-                display: "flex",
-                flexDirection:
-                  "column",
-                justifyContent:
-                  "center",
-              }}
-            >
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "27px",
-                  lineHeight: "35px",
-                  fontWeight: 900,
-                  color: "#fff",
-                  overflowWrap:
-                    "break-word",
-                  wordBreak:
-                    "normal",
-                }}
-              >
-                {profile.message}
-              </p>
-
-              <p
-                style={{
-                  margin:
-                    "10px 0 0",
-                  fontSize: "14px",
-                  lineHeight:
-                    "18px",
-                  fontWeight: 600,
-                  color: "#8f939c",
-                }}
-              >
-                {profile.rank} · firma de aura
-              </p>
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  "1fr 1fr",
-                columnGap:
-                  "14px",
-                rowGap: "14px",
-                width: "100%",
-                marginTop: "14px",
-              }}
-            >
-              {statItems.map(
-                ([name, value]) => (
-                  <div
-                    key={name}
-                    style={{
-                      height: "112px",
-                      boxSizing:
-                        "border-box",
-                      padding:
-                        "18px 20px",
-                      borderRadius:
-                        "15px",
-                      background:
-                        "#191b21",
-                      border:
-                        "1px solid rgba(255,255,255,0.04)",
-                      display: "flex",
-                      flexDirection:
-                        "column",
-                      justifyContent:
-                        "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display:
-                          "flex",
-                        alignItems:
-                          "center",
-                        justifyContent:
-                          "space-between",
-                        width:
-                          "100%",
-                      }}
-                    >
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize:
-                            "11px",
-                          lineHeight:
-                            "14px",
-                          fontWeight:
-                            900,
-                          letterSpacing:
-                            "1.5px",
-                          color:
-                            "#858992",
-                        }}
-                      >
-                        {name}
-                      </p>
-
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize:
-                            "17px",
-                          lineHeight:
-                            "21px",
-                          fontWeight:
-                            900,
-                          color:
-                            profile.accent,
-                        }}
-                      >
-                        {value}
-                      </p>
-                    </div>
-
-                    <div
-                      style={{
-                        width:
-                          "100%",
-                        height:
-                          "6px",
-                        marginTop:
-                          "11px",
-                        borderRadius:
-                          "999px",
-                        background:
-                          "#2b2e36",
-                        overflow:
-                          "hidden",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: `${value}%`,
-                          height:
-                            "6px",
-                          borderRadius:
-                            "999px",
-                          background:
-                            profile.accent,
-                        }}
-                      />
-                    </div>
-                  </div>
-                )
-              )}
-            </div>
-
-            <div
-              style={{
-                position:
-                  "absolute",
-                left: "44px",
-                right: "44px",
-                bottom: "42px",
-                height: "230px",
-                boxSizing:
-                  "border-box",
-                padding: "28px",
-                borderRadius:
-                  "18px",
-                background:
-                  "linear-gradient(135deg,rgba(88,101,242,0.08),rgba(250,204,21,0.025))",
-                border:
-                  "1px solid rgba(255,255,255,0.05)",
-                display: "flex",
-                alignItems:
-                  "center",
-                justifyContent:
-                  "space-between",
-              }}
-            >
-              <div
-                style={{
-                  width: "620px",
-                }}
-              >
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "13px",
-                    lineHeight:
-                      "18px",
-                    fontWeight: 900,
-                    letterSpacing:
-                      "2px",
-                    color: "#737781",
-                  }}
-                >
-                  ¿CUÁNTA AURA TENÉS?
-                </p>
-
-                <p
-                  style={{
-                    margin:
-                      "10px 0 0",
-                    fontSize: "22px",
-                    lineHeight:
-                      "30px",
-                    fontWeight: 900,
-                    color: "#fff",
-                  }}
-                >
-                  Probá tu nombre y descubrí tu nivel.
-                </p>
-
-                <p
-                  style={{
-                    margin:
-                      "8px 0 0",
-                    fontSize: "14px",
-                    lineHeight:
-                      "19px",
-                    fontWeight: 600,
-                    color: "#70747d",
-                  }}
-                >
-                  aura.kodari.xyz
-                </p>
-              </div>
-
-              {qrCode && (
-                <div
-                  style={{
-                    width: "150px",
-                    height: "150px",
-                    padding: "12px",
-                    boxSizing:
-                      "border-box",
-                    borderRadius:
-                      "15px",
-                    background:
-                      "#fff",
-                    display: "flex",
-                    alignItems:
-                      "center",
-                    justifyContent:
-                      "center",
-                  }}
-                >
-                  <img
-                    src={qrCode}
-                    alt=""
-                    width={126}
-                    height={126}
-                    style={{
-                      display:
-                        "block",
-                      width:
-                        "126px",
-                      height:
-                        "126px",
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div
-            style={{
-              position: "relative",
-              zIndex: 2,
-              width: "100%",
-              height: "120px",
-              minHeight: "120px",
-              marginTop: "28px",
-              boxSizing:
-                "border-box",
-              display: "flex",
-              alignItems:
-                "center",
-              justifyContent:
-                "space-between",
-              padding: "0 10px",
-              borderTop:
-                "1px solid rgba(255,255,255,0.08)",
-            }}
-          >
-            <div>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "15px",
-                  lineHeight:
-                    "20px",
-                  fontWeight: 900,
-                  letterSpacing:
-                    "3px",
-                  color: "#6e727b",
-                }}
-              >
-                AURA CHECK
-              </p>
-
-              <p
-                style={{
-                  margin:
-                    "7px 0 0",
-                  fontSize: "13px",
-                  lineHeight:
-                    "18px",
-                  fontWeight: 600,
-                  color: "#555963",
-                }}
-              >
-                aura.kodari.xyz
-              </p>
-            </div>
-
-            <p
-              style={{
-                margin: 0,
-                fontSize: "13px",
-                lineHeight:
-                  "18px",
-                fontWeight: 600,
-                color: "#555963",
-              }}
-            >
-              Tu nombre. Tu aura.
-            </p>
-          </div>
-        </div>
-      )}
     </main>
   );
 };
