@@ -683,7 +683,7 @@ export const FormAura = () => {
     }
 
     await new Promise((resolve) =>
-      setTimeout(resolve, 150)
+      setTimeout(resolve, 200)
     );
 
     return html2canvas(
@@ -694,8 +694,8 @@ export const FormAura = () => {
         scale: 1,
         backgroundColor: "#090a0e",
         logging: false,
-        windowWidth: 1080,
-        windowHeight: 1920,
+        useCORS: true,
+        allowTaint: false,
       }
     );
   };
@@ -917,20 +917,14 @@ export const FormAura = () => {
 
   return (
     <main className="relative min-h-[100svh] overflow-x-hidden bg-[#090a0e] text-white">
-
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(88,101,242,0.12),transparent_30%),radial-gradient(circle_at_100%_100%,rgba(250,204,21,0.06),transparent_32%)]" />
 
       <section className="relative z-10 flex min-h-[100svh] items-center justify-center px-4 py-8 sm:px-6">
-
         <div className="w-full max-w-[440px]">
-
           {!profile && !loading && (
             <div>
-
               <div className="mb-8">
-
                 <div className="mb-6 flex items-center gap-3">
-
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#5865F2] text-sm font-black shadow-lg shadow-[#5865F2]/25">
                     A
                   </div>
@@ -944,7 +938,6 @@ export const FormAura = () => {
                       análisis de presencia
                     </p>
                   </div>
-
                 </div>
 
                 <h1 className="text-[32px] font-black leading-[1.05] tracking-[-0.04em] text-white">
@@ -959,26 +952,21 @@ export const FormAura = () => {
                   descubrí qué tanta
                   presencia tiene.
                 </p>
-
               </div>
 
               <form
                 onSubmit={checkAura}
                 className="overflow-hidden rounded-2xl border border-white/[0.09] bg-[#111318] shadow-2xl"
               >
-
                 <div className="flex items-center gap-3 border-b border-white/[0.08] bg-[#171920] px-5 py-4">
-
                   <span className="h-2 w-2 rounded-full bg-[#23a55a] shadow-[0_0_10px_rgba(35,165,90,0.5)]" />
 
                   <span className="text-[10px] font-bold tracking-[0.15em] text-white/45 uppercase">
                     ingresar usuario
                   </span>
-
                 </div>
 
                 <div className="p-5">
-
                   <label
                     htmlFor="username"
                     className="mb-2.5 block text-xs font-semibold text-white/60"
@@ -987,7 +975,6 @@ export const FormAura = () => {
                   </label>
 
                   <div className="relative">
-
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-white/35">
                       @
                     </span>
@@ -1005,7 +992,6 @@ export const FormAura = () => {
                       autoComplete="off"
                       className="w-full rounded-xl border border-white/[0.09] bg-[#0a0b0f] py-3.5 pl-9 pr-4 text-sm font-medium text-white outline-none transition placeholder:text-white/25 focus:border-[#5865F2]/70 focus:bg-[#0c0d12]"
                     />
-
                   </div>
 
                   <button
@@ -1014,30 +1000,24 @@ export const FormAura = () => {
                   >
                     Ver mi aura
                   </button>
-
                 </div>
-
               </form>
 
               <p className="mt-5 text-center text-[11px] text-white/30">
                 Cada nombre tiene una
                 firma diferente.
               </p>
-
             </div>
           )}
 
           {loading && (
             <div className="flex min-h-[440px] flex-col items-center justify-center text-center">
-
               <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-[#5865F2]/[0.08]">
-
                 <div className="absolute inset-1 animate-spin rounded-full border-2 border-transparent border-t-[#facc15]" />
 
                 <span className="text-xl font-black text-white">
                   A
                 </span>
-
               </div>
 
               <p className="mt-7 text-[10px] font-bold tracking-[0.25em] text-[#facc15] uppercase">
@@ -1051,16 +1031,13 @@ export const FormAura = () => {
               <p className="mt-7 text-xs text-white/30">
                 calculando presencia...
               </p>
-
             </div>
           )}
 
           {profile && !loading && (
             <div>
-
               {fromSharedLink && (
                 <div className="mb-4 rounded-xl border border-[#5865F2]/25 bg-[#5865F2]/[0.08] px-4 py-3.5 text-center">
-
                   <p className="text-[10px] font-black tracking-[0.15em] text-[#9da5ff] uppercase">
                     te desafiaron
                   </p>
@@ -1069,16 +1046,12 @@ export const FormAura = () => {
                     Este es el resultado
                     de @{profile.username}
                   </p>
-
                 </div>
               )}
 
               <div className="overflow-hidden rounded-2xl border border-white/[0.09] bg-[#111318] shadow-2xl">
-
                 <div className="flex items-center justify-between gap-4 border-b border-white/[0.08] bg-[#171920] px-5 py-4">
-
                   <div className="flex min-w-0 items-center gap-3">
-
                     <div
                       className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xs font-black text-white"
                       style={{
@@ -1092,7 +1065,6 @@ export const FormAura = () => {
                     </div>
 
                     <div className="min-w-0">
-
                       <p className="truncate text-sm font-bold text-white">
                         @{profile.username}
                       </p>
@@ -1100,9 +1072,7 @@ export const FormAura = () => {
                       <p className="mt-0.5 text-[10px] text-white/35">
                         resultado personal
                       </p>
-
                     </div>
-
                   </div>
 
                   <span
@@ -1114,11 +1084,9 @@ export const FormAura = () => {
                   >
                     {profile.rank}
                   </span>
-
                 </div>
 
                 <div className="relative px-5 py-6 sm:px-6 sm:py-7">
-
                   <div
                     className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full blur-[90px]"
                     style={{
@@ -1129,17 +1097,13 @@ export const FormAura = () => {
                   />
 
                   <div className="relative">
-
                     <div className="flex items-end justify-between gap-4">
-
                       <div className="min-w-0">
-
                         <p className="text-[9px] font-bold tracking-[0.2em] text-white/35 uppercase">
                           nivel de aura
                         </p>
 
                         <div className="mt-2 flex items-end gap-2">
-
                           <span className="text-[52px] font-black leading-none tracking-[-0.06em] text-white sm:text-6xl">
                             {formatAura(
                               displayAura
@@ -1149,13 +1113,10 @@ export const FormAura = () => {
                           <span className="pb-1 text-[11px] text-white/35">
                             / 10.000
                           </span>
-
                         </div>
-
                       </div>
 
                       <div className="shrink-0 text-right">
-
                         <p
                           className="text-xl font-black"
                           style={{
@@ -1174,13 +1135,10 @@ export const FormAura = () => {
                         <p className="mt-1 text-[9px] font-medium text-white/30">
                           intensidad
                         </p>
-
                       </div>
-
                     </div>
 
                     <div className="mt-6 h-2.5 overflow-hidden rounded-full bg-[#252830]">
-
                       <div
                         className="h-full rounded-full"
                         style={{
@@ -1193,11 +1151,9 @@ export const FormAura = () => {
                             "linear-gradient(90deg,#5865F2,#8b7cf6,#facc15)",
                         }}
                       />
-
                     </div>
 
                     <div className="mt-6 rounded-xl border border-white/[0.05] bg-[#191b21] px-4 py-4">
-
                       <p className="text-[15px] font-black leading-5 text-white sm:text-base">
                         {profile.message}
                       </p>
@@ -1206,20 +1162,16 @@ export const FormAura = () => {
                         {profile.rank} · firma
                         de aura
                       </p>
-
                     </div>
 
                     <div className="mt-3 grid grid-cols-2 gap-2.5">
-
                       {statItems.map(
                         ([name, value]) => (
                           <div
                             key={name}
                             className="rounded-xl border border-white/[0.04] bg-[#191b21] px-3.5 py-3"
                           >
-
                             <div className="flex items-center justify-between gap-2">
-
                               <p className="text-[8px] font-bold tracking-[0.12em] text-white/35">
                                 {name}
                               </p>
@@ -1233,11 +1185,9 @@ export const FormAura = () => {
                               >
                                 {value}
                               </p>
-
                             </div>
 
                             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#292c34]">
-
                               <div
                                 className="h-full rounded-full"
                                 style={{
@@ -1246,21 +1196,15 @@ export const FormAura = () => {
                                     profile.accent,
                                 }}
                               />
-
                             </div>
-
                           </div>
                         )
                       )}
-
                     </div>
-
                   </div>
-
                 </div>
 
                 <div className="flex items-center justify-between border-t border-white/[0.07] bg-[#0e0f13] px-5 py-3">
-
                   <p className="text-[8px] font-black tracking-[0.2em] text-white/25">
                     AURA CHECK
                   </p>
@@ -1268,9 +1212,7 @@ export const FormAura = () => {
                   <p className="text-[8px] font-medium text-white/25">
                     aura.kodari.xyz
                   </p>
-
                 </div>
-
               </div>
 
               <button
@@ -1296,9 +1238,7 @@ export const FormAura = () => {
               </button>
 
               <div className="mt-5 rounded-2xl border border-white/[0.08] bg-[#111318] p-5">
-
                 <div className="text-center">
-
                   <p className="text-sm font-bold text-white/75">
                     ¿Y vos?
                   </p>
@@ -1308,13 +1248,10 @@ export const FormAura = () => {
                     y hacé que tus amigos
                     descubran el suyo.
                   </p>
-
                 </div>
 
                 <div className="mt-5 flex items-center gap-4">
-
                   <div className="min-w-0 flex-1">
-
                     <p className="text-[9px] font-bold tracking-[0.12em] text-white/30 uppercase">
                       tu resultado
                     </p>
@@ -1323,7 +1260,6 @@ export const FormAura = () => {
                       aura.kodari.xyz/?u=
                       {profile.username}
                     </p>
-
                   </div>
 
                   {qrCode && (
@@ -1333,9 +1269,7 @@ export const FormAura = () => {
                       className="h-[68px] w-[68px] shrink-0 rounded-lg"
                     />
                   )}
-
                 </div>
-
               </div>
 
               <button
@@ -1345,12 +1279,9 @@ export const FormAura = () => {
               >
                 Probar otro nombre
               </button>
-
             </div>
           )}
-
         </div>
-
       </section>
 
       {profile && (
@@ -1362,7 +1293,8 @@ export const FormAura = () => {
             top: "0",
             width: "1080px",
             height: "1920px",
-            backgroundColor: "#090a0e",
+            boxSizing: "border-box",
+            background: "#090a0e",
             color: "#fff",
             padding: "64px",
             display: "flex",
@@ -1372,34 +1304,32 @@ export const FormAura = () => {
               "Arial, Helvetica, sans-serif",
           }}
         >
-
           <div
             style={{
               position: "absolute",
-              width: "800px",
-              height: "800px",
+              width: "760px",
+              height: "760px",
               borderRadius: "50%",
-              backgroundColor:
+              background:
                 profile.accent,
               opacity: 0.08,
-              filter: "blur(170px)",
-              top: "-380px",
-              right: "-280px",
+              filter: "blur(160px)",
+              top: "-360px",
+              right: "-260px",
             }}
           />
 
           <div
             style={{
               position: "absolute",
-              width: "600px",
-              height: "600px",
+              width: "620px",
+              height: "620px",
               borderRadius: "50%",
-              backgroundColor:
-                "#5865F2",
-              opacity: 0.045,
+              background: "#5865F2",
+              opacity: 0.04,
               filter: "blur(150px)",
               bottom: "-300px",
-              left: "-250px",
+              left: "-260px",
             }}
           />
 
@@ -1407,52 +1337,65 @@ export const FormAura = () => {
             style={{
               position: "relative",
               zIndex: 2,
+              width: "100%",
+              height: "118px",
+              minHeight: "118px",
+              boxSizing: "border-box",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              padding: "28px 32px",
+              padding: "0 30px",
               borderRadius: "22px",
-              backgroundColor: "#16181f",
+              background: "#16181f",
               border:
                 "1px solid rgba(255,255,255,0.09)",
             }}
           >
-
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
+                height: "100%",
                 gap: "18px",
               }}
             >
-
               <div
                 style={{
                   width: "62px",
                   height: "62px",
+                  minWidth: "62px",
                   borderRadius: "17px",
-                  backgroundColor:
+                  background:
                     profile.accent,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  textAlign: "center",
                   fontSize: "29px",
+                  lineHeight: "62px",
                   fontWeight: 900,
-                  color: "#ffffff",
+                  color: "#fff",
                 }}
               >
                 A
               </div>
 
-              <div>
-
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection:
+                    "column",
+                  justifyContent:
+                    "center",
+                }}
+              >
                 <p
                   style={{
                     margin: 0,
                     fontSize: "28px",
-                    lineHeight: 1.1,
+                    lineHeight: "32px",
                     fontWeight: 900,
-                    color: "#ffffff",
+                    color: "#fff",
                   }}
                 >
                   Aura Check
@@ -1462,74 +1405,85 @@ export const FormAura = () => {
                   style={{
                     margin: "7px 0 0",
                     fontSize: "15px",
+                    lineHeight: "19px",
                     fontWeight: 600,
                     color: "#9da1aa",
                   }}
                 >
                   análisis de presencia
                 </p>
-
               </div>
-
             </div>
 
             <div
               style={{
-                padding: "10px 16px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent:
+                  "center",
+                height: "40px",
+                padding: "0 17px",
                 borderRadius: "999px",
-                backgroundColor:
-                  "rgba(255,255,255,0.04)",
+                background:
+                  "rgba(255,255,255,0.045)",
               }}
             >
-              <p
+              <span
                 style={{
-                  margin: 0,
-                  fontSize: "14px",
+                  display: "block",
+                  fontSize: "13px",
+                  lineHeight: "16px",
                   fontWeight: 900,
                   letterSpacing: "2px",
-                  color: profile.accent,
+                  color:
+                    profile.accent,
                 }}
               >
                 {profile.rank}
-              </p>
+              </span>
             </div>
-
           </div>
 
           <div
             style={{
               position: "relative",
               zIndex: 2,
-              marginTop: "38px",
-              padding: "46px",
-              borderRadius: "24px",
-              backgroundColor: "#111318",
+              width: "100%",
+              height: "1450px",
+              minHeight: "1450px",
+              marginTop: "34px",
+              boxSizing: "border-box",
+              padding: "44px",
+              borderRadius: "26px",
+              background: "#111318",
               border:
                 "1px solid rgba(255,255,255,0.09)",
             }}
           >
-
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "20px",
+                width: "100%",
+                height: "88px",
               }}
             >
-
               <div
                 style={{
-                  width: "76px",
-                  height: "76px",
+                  width: "82px",
+                  height: "82px",
+                  minWidth: "82px",
                   borderRadius: "50%",
-                  backgroundColor:
+                  background:
                     profile.accent,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: "24px",
+                  textAlign: "center",
+                  fontSize: "26px",
+                  lineHeight: "82px",
                   fontWeight: 900,
-                  color: "#ffffff",
+                  color: "#fff",
                 }}
               >
                 {getInitials(
@@ -1537,15 +1491,30 @@ export const FormAura = () => {
                 )}
               </div>
 
-              <div>
-
+              <div
+                style={{
+                  marginLeft: "20px",
+                  minWidth: 0,
+                  maxWidth: "700px",
+                  display: "flex",
+                  flexDirection:
+                    "column",
+                  justifyContent:
+                    "center",
+                }}
+              >
                 <p
                   style={{
                     margin: 0,
-                    fontSize: "31px",
-                    lineHeight: 1.1,
+                    fontSize: "32px",
+                    lineHeight: "38px",
                     fontWeight: 900,
-                    color: "#ffffff",
+                    color: "#fff",
+                    whiteSpace:
+                      "nowrap",
+                    overflow: "hidden",
+                    textOverflow:
+                      "ellipsis",
                   }}
                 >
                   @{profile.username}
@@ -1553,29 +1522,29 @@ export const FormAura = () => {
 
                 <p
                   style={{
-                    margin: "8px 0 0",
+                    margin: "7px 0 0",
                     fontSize: "15px",
+                    lineHeight: "20px",
                     fontWeight: 600,
                     color: "#8f939c",
                   }}
                 >
                   firma de aura
                 </p>
-
               </div>
-
             </div>
 
             <div
               style={{
                 marginTop: "62px",
+                width: "100%",
               }}
             >
-
               <p
                 style={{
                   margin: 0,
                   fontSize: "14px",
+                  lineHeight: "18px",
                   fontWeight: 900,
                   letterSpacing: "3px",
                   color: "#8f939c",
@@ -1587,20 +1556,21 @@ export const FormAura = () => {
               <div
                 style={{
                   display: "flex",
-                  alignItems: "baseline",
-                  gap: "22px",
-                  marginTop: "13px",
+                  alignItems:
+                    "flex-end",
+                  width: "100%",
+                  marginTop: "12px",
                 }}
               >
-
                 <p
                   style={{
                     margin: 0,
-                    fontSize: "142px",
-                    lineHeight: 0.95,
+                    fontSize: "126px",
+                    lineHeight: "126px",
                     fontWeight: 900,
-                    letterSpacing: "-7px",
-                    color: "#ffffff",
+                    letterSpacing:
+                      "-6px",
+                    color: "#fff",
                   }}
                 >
                   {formatAura(
@@ -1610,35 +1580,44 @@ export const FormAura = () => {
 
                 <p
                   style={{
-                    margin: 0,
-                    fontSize: "21px",
+                    margin:
+                      "0 0 10px 20px",
+                    fontSize: "20px",
+                    lineHeight: "24px",
                     fontWeight: 600,
                     color: "#727680",
+                    whiteSpace:
+                      "nowrap",
                   }}
                 >
                   / 10.000
                 </p>
-
               </div>
 
               <div
                 style={{
-                  marginTop: "18px",
                   display: "inline-flex",
-                  padding:
-                    "8px 14px",
+                  alignItems:
+                    "center",
+                  justifyContent:
+                    "center",
+                  height: "38px",
+                  marginTop: "18px",
+                  padding: "0 15px",
                   borderRadius:
                     "999px",
-                  backgroundColor:
+                  background:
                     "rgba(255,255,255,0.04)",
                 }}
               >
-                <p
+                <span
                   style={{
-                    margin: 0,
-                    fontSize: "15px",
+                    fontSize: "14px",
+                    lineHeight:
+                      "18px",
                     fontWeight: 900,
-                    letterSpacing: "2px",
+                    letterSpacing:
+                      "2px",
                     color:
                       profile.accent,
                   }}
@@ -1649,28 +1628,28 @@ export const FormAura = () => {
                       100
                   )}
                   % INTENSIDAD
-                </p>
+                </span>
               </div>
-
             </div>
 
             <div
               style={{
+                width: "100%",
                 marginTop: "48px",
               }}
             >
-
               <div
                 style={{
                   width: "100%",
                   height: "14px",
-                  borderRadius: "999px",
-                  backgroundColor:
+                  borderRadius:
+                    "999px",
+                  background:
                     "#292c34",
-                  overflow: "hidden",
+                  overflow:
+                    "hidden",
                 }}
               >
-
                 <div
                   style={{
                     width: `${
@@ -1678,13 +1657,13 @@ export const FormAura = () => {
                         10000) *
                       100
                     }%`,
-                    height: "100%",
-                    borderRadius: "999px",
+                    height: "14px",
+                    borderRadius:
+                      "999px",
                     background:
                       "linear-gradient(90deg,#5865F2,#8b7cf6,#facc15)",
                   }}
                 />
-
               </div>
 
               <div
@@ -1692,40 +1671,68 @@ export const FormAura = () => {
                   display: "flex",
                   justifyContent:
                     "space-between",
-                  marginTop: "12px",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  color: "#737781",
+                  marginTop: "11px",
                 }}
               >
-                <span>0</span>
+                <span
+                  style={{
+                    fontSize: "13px",
+                    lineHeight:
+                      "17px",
+                    fontWeight: 600,
+                    color: "#737781",
+                  }}
+                >
+                  0
+                </span>
 
-                <span>
+                <span
+                  style={{
+                    fontSize: "13px",
+                    lineHeight:
+                      "17px",
+                    fontWeight: 600,
+                    color: "#737781",
+                  }}
+                >
                   10.000
                 </span>
               </div>
-
             </div>
 
             <div
               style={{
+                width: "100%",
+                minHeight: "150px",
                 marginTop: "44px",
-                padding: "28px 30px",
-                borderRadius: "16px",
-                backgroundColor:
+                padding:
+                  "25px 28px",
+                boxSizing:
+                  "border-box",
+                borderRadius:
+                  "17px",
+                background:
                   "#191b21",
                 border:
                   "1px solid rgba(255,255,255,0.05)",
+                display: "flex",
+                flexDirection:
+                  "column",
+                justifyContent:
+                  "center",
               }}
             >
-
               <p
                 style={{
                   margin: 0,
-                  fontSize: "29px",
-                  lineHeight: 1.25,
+                  fontSize: "27px",
+                  lineHeight: "35px",
                   fontWeight: 900,
-                  color: "#ffffff",
+                  color: "#fff",
+                  overflowWrap:
+                    "break-word",
+                  wordBreak:
+                    "normal",
                 }}
               >
                 {profile.message}
@@ -1733,15 +1740,17 @@ export const FormAura = () => {
 
               <p
                 style={{
-                  margin: "10px 0 0",
+                  margin:
+                    "10px 0 0",
                   fontSize: "14px",
+                  lineHeight:
+                    "18px",
                   fontWeight: 600,
                   color: "#8f939c",
                 }}
               >
                 {profile.rank} · firma de aura
               </p>
-
             </div>
 
             <div
@@ -1749,27 +1758,36 @@ export const FormAura = () => {
                 display: "grid",
                 gridTemplateColumns:
                   "1fr 1fr",
-                gap: "14px",
+                columnGap:
+                  "14px",
+                rowGap: "14px",
+                width: "100%",
                 marginTop: "14px",
               }}
             >
-
               {statItems.map(
                 ([name, value]) => (
                   <div
                     key={name}
                     style={{
+                      height: "112px",
+                      boxSizing:
+                        "border-box",
                       padding:
-                        "20px",
+                        "18px 20px",
                       borderRadius:
-                        "14px",
-                      backgroundColor:
+                        "15px",
+                      background:
                         "#191b21",
                       border:
                         "1px solid rgba(255,255,255,0.04)",
+                      display: "flex",
+                      flexDirection:
+                        "column",
+                      justifyContent:
+                        "center",
                     }}
                   >
-
                     <div
                       style={{
                         display:
@@ -1778,15 +1796,17 @@ export const FormAura = () => {
                           "center",
                         justifyContent:
                           "space-between",
-                        gap: "12px",
+                        width:
+                          "100%",
                       }}
                     >
-
                       <p
                         style={{
                           margin: 0,
                           fontSize:
                             "11px",
+                          lineHeight:
+                            "14px",
                           fontWeight:
                             900,
                           letterSpacing:
@@ -1803,6 +1823,8 @@ export const FormAura = () => {
                           margin: 0,
                           fontSize:
                             "17px",
+                          lineHeight:
+                            "21px",
                           fontWeight:
                             900,
                           color:
@@ -1811,68 +1833,182 @@ export const FormAura = () => {
                       >
                         {value}
                       </p>
-
                     </div>
 
                     <div
                       style={{
-                        marginTop:
-                          "11px",
+                        width:
+                          "100%",
                         height:
                           "6px",
+                        marginTop:
+                          "11px",
                         borderRadius:
                           "999px",
-                        backgroundColor:
+                        background:
                           "#2b2e36",
                         overflow:
                           "hidden",
                       }}
                     >
-
                       <div
                         style={{
                           width: `${value}%`,
                           height:
-                            "100%",
+                            "6px",
                           borderRadius:
                             "999px",
-                          backgroundColor:
+                          background:
                             profile.accent,
                         }}
                       />
-
                     </div>
-
                   </div>
                 )
               )}
-
             </div>
 
+            <div
+              style={{
+                position:
+                  "absolute",
+                left: "44px",
+                right: "44px",
+                bottom: "42px",
+                height: "230px",
+                boxSizing:
+                  "border-box",
+                padding: "28px",
+                borderRadius:
+                  "18px",
+                background:
+                  "linear-gradient(135deg,rgba(88,101,242,0.08),rgba(250,204,21,0.025))",
+                border:
+                  "1px solid rgba(255,255,255,0.05)",
+                display: "flex",
+                alignItems:
+                  "center",
+                justifyContent:
+                  "space-between",
+              }}
+            >
+              <div
+                style={{
+                  width: "620px",
+                }}
+              >
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: "13px",
+                    lineHeight:
+                      "18px",
+                    fontWeight: 900,
+                    letterSpacing:
+                      "2px",
+                    color: "#737781",
+                  }}
+                >
+                  ¿CUÁNTA AURA TENÉS?
+                </p>
+
+                <p
+                  style={{
+                    margin:
+                      "10px 0 0",
+                    fontSize: "22px",
+                    lineHeight:
+                      "30px",
+                    fontWeight: 900,
+                    color: "#fff",
+                  }}
+                >
+                  Probá tu nombre y descubrí tu nivel.
+                </p>
+
+                <p
+                  style={{
+                    margin:
+                      "8px 0 0",
+                    fontSize: "14px",
+                    lineHeight:
+                      "19px",
+                    fontWeight: 600,
+                    color: "#70747d",
+                  }}
+                >
+                  aura.kodari.xyz
+                </p>
+              </div>
+
+              {qrCode && (
+                <div
+                  style={{
+                    width: "150px",
+                    height: "150px",
+                    padding: "12px",
+                    boxSizing:
+                      "border-box",
+                    borderRadius:
+                      "15px",
+                    background:
+                      "#fff",
+                    display: "flex",
+                    alignItems:
+                      "center",
+                    justifyContent:
+                      "center",
+                  }}
+                >
+                  <img
+                    src={qrCode}
+                    alt=""
+                    width={126}
+                    height={126}
+                    style={{
+                      display:
+                        "block",
+                      width:
+                        "126px",
+                      height:
+                        "126px",
+                    }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           <div
             style={{
               position: "relative",
               zIndex: 2,
+              width: "100%",
+              height: "120px",
+              minHeight: "120px",
+              marginTop: "28px",
+              boxSizing:
+                "border-box",
               display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginTop: "auto",
-              paddingTop: "34px",
+              alignItems:
+                "center",
+              justifyContent:
+                "space-between",
+              padding: "0 10px",
               borderTop:
                 "1px solid rgba(255,255,255,0.08)",
             }}
           >
-
             <div>
-
               <p
                 style={{
                   margin: 0,
                   fontSize: "15px",
+                  lineHeight:
+                    "20px",
                   fontWeight: 900,
-                  letterSpacing: "3px",
+                  letterSpacing:
+                    "3px",
                   color: "#6e727b",
                 }}
               >
@@ -1881,43 +2017,34 @@ export const FormAura = () => {
 
               <p
                 style={{
-                  margin: "7px 0 0",
+                  margin:
+                    "7px 0 0",
                   fontSize: "13px",
+                  lineHeight:
+                    "18px",
                   fontWeight: 600,
                   color: "#555963",
                 }}
               >
                 aura.kodari.xyz
               </p>
-
             </div>
 
-            {qrCode && (
-              <div
-                style={{
-                  padding: "10px",
-                  borderRadius: "12px",
-                  backgroundColor:
-                    "#ffffff",
-                }}
-              >
-                <img
-                  src={qrCode}
-                  alt=""
-                  style={{
-                    display: "block",
-                    width: "110px",
-                    height: "110px",
-                  }}
-                />
-              </div>
-            )}
-
+            <p
+              style={{
+                margin: 0,
+                fontSize: "13px",
+                lineHeight:
+                  "18px",
+                fontWeight: 600,
+                color: "#555963",
+              }}
+            >
+              Tu nombre. Tu aura.
+            </p>
           </div>
-
         </div>
       )}
-
     </main>
   );
 };
