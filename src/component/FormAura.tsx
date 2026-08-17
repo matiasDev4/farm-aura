@@ -14,10 +14,12 @@ type AuraProfile = {
   accent: string;
 };
 
-type CanvasPaint =
-  | string
-  | CanvasGradient
-  | CanvasPattern;
+type StatItem = {
+  name: string;
+  value: number;
+};
+
+type CanvasPaint = string | CanvasGradient | CanvasPattern;
 
 const SITE_URL = "https://aura.kodari.xyz";
 
@@ -556,39 +558,47 @@ const roundRect = (
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.lineTo(x + width - r, y);
+
   ctx.quadraticCurveTo(
     x + width,
     y,
     x + width,
     y + r
   );
+
   ctx.lineTo(
     x + width,
     y + height - r
   );
+
   ctx.quadraticCurveTo(
     x + width,
     y + height,
     x + width - r,
     y + height
   );
+
   ctx.lineTo(
     x + r,
     y + height
   );
+
   ctx.quadraticCurveTo(
     x,
     y + height,
     x,
     y + height - r
   );
+
   ctx.lineTo(x, y + r);
+
   ctx.quadraticCurveTo(
     x,
     y,
     x + r,
     y
   );
+
   ctx.closePath();
 };
 
@@ -665,10 +675,6 @@ const drawText = (
   ctx.textBaseline =
     options.baseline ?? "alphabetic";
 
-  /*
-   * Canvas no tiene letter-spacing estándar.
-   * Para los textos normales no hace falta.
-   */
   if (
     !options.letterSpacing ||
     options.letterSpacing === 0
@@ -679,6 +685,7 @@ const drawText = (
   }
 
   const chars = [...text];
+
   const widths = chars.map((char) =>
     ctx.measureText(char).width
   );
@@ -753,12 +760,6 @@ const wrapText = (
 const createAuraCanvas = async (
   profile: AuraProfile
 ) => {
-  /*
-   * Tamaño final de la imagen.
-   *
-   * Se dibuja a 2x para obtener una imagen
-   * nítida en celulares y redes sociales.
-   */
   const scale = 2;
 
   const width = 880;
@@ -784,10 +785,8 @@ const createAuraCanvas = async (
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
 
-  /*
-   * Fondo.
-   */
   ctx.fillStyle = "#090a0e";
+
   ctx.fillRect(
     0,
     0,
@@ -795,9 +794,6 @@ const createAuraCanvas = async (
     height
   );
 
-  /*
-   * Glow.
-   */
   const glow =
     ctx.createRadialGradient(
       width - 80,
@@ -827,18 +823,6 @@ const createAuraCanvas = async (
     height
   );
 
-  /*
-   * CARD PRINCIPAL.
-   *
-   * Importante:
-   * no usamos stroke directamente sobre
-   * el borde exterior porque eso puede
-   * hacer que visualmente parezca más
-   * grueso.
-   *
-   * En cambio dibujamos primero el fondo
-   * y después una línea de 1px centrada.
-   */
   fillRoundRect(
     ctx,
     20,
@@ -860,9 +844,6 @@ const createAuraCanvas = async (
     1
   );
 
-  /*
-   * HEADER.
-   */
   fillRoundRect(
     ctx,
     21,
@@ -873,11 +854,8 @@ const createAuraCanvas = async (
     "#171920"
   );
 
-  /*
-   * Tapamos la parte inferior del rounded
-   * header para que quede recto.
-   */
   ctx.fillStyle = "#171920";
+
   ctx.fillRect(
     21,
     80,
@@ -885,10 +863,8 @@ const createAuraCanvas = async (
     39
   );
 
-  /*
-   * Separador.
-   */
   ctx.fillStyle = "#ffffff12";
+
   ctx.fillRect(
     21,
     118,
@@ -896,10 +872,8 @@ const createAuraCanvas = async (
     1
   );
 
-  /*
-   * Avatar.
-   */
   ctx.beginPath();
+
   ctx.arc(
     75,
     69,
@@ -927,12 +901,6 @@ const createAuraCanvas = async (
     }
   );
 
-  /*
-   * USERNAME.
-   *
-   * Tiene una zona independiente.
-   * Esto evita que el rank lo tape.
-   */
   drawText(
     ctx,
     `@${profile.username}`,
@@ -959,12 +927,6 @@ const createAuraCanvas = async (
     }
   );
 
-  /*
-   * RANK.
-   *
-   * Lo ubicamos siempre dentro de un
-   * espacio de 190px.
-   */
   drawText(
     ctx,
     profile.rank,
@@ -980,10 +942,8 @@ const createAuraCanvas = async (
     }
   );
 
-  /*
-   * CONTENIDO.
-   */
   const contentX = 55;
+
   const contentWidth =
     width - 110;
 
@@ -1000,9 +960,6 @@ const createAuraCanvas = async (
     }
   );
 
-  /*
-   * Aura.
-   */
   drawText(
     ctx,
     formatAura(profile.aura),
@@ -1012,7 +969,6 @@ const createAuraCanvas = async (
       size: 65,
       weight: 900,
       color: "#ffffff",
-      baseline: "alphabetic",
     }
   );
 
@@ -1025,13 +981,9 @@ const createAuraCanvas = async (
       size: 12,
       weight: 400,
       color: "#ffffff59",
-      baseline: "alphabetic",
     }
   );
 
-  /*
-   * Porcentaje.
-   */
   drawText(
     ctx,
     `${Math.round(
@@ -1060,9 +1012,6 @@ const createAuraCanvas = async (
     }
   );
 
-  /*
-   * Barra de aura.
-   */
   fillRoundRect(
     ctx,
     contentX,
@@ -1112,9 +1061,6 @@ const createAuraCanvas = async (
     );
   }
 
-  /*
-   * MESSAGE BOX.
-   */
   const messageY = 290;
   const messageHeight = 115;
 
@@ -1149,11 +1095,8 @@ const createAuraCanvas = async (
       contentWidth - 48
     );
 
-  const maxMessageLines =
-    Math.min(messageLines.length, 3);
-
   messageLines
-    .slice(0, maxMessageLines)
+    .slice(0, 3)
     .forEach((line, index) => {
       drawText(
         ctx,
@@ -1182,21 +1125,27 @@ const createAuraCanvas = async (
     }
   );
 
-  /*
-   * BADGES / STATS.
-   *
-   * Cada tarjeta tiene altura fija.
-   * El texto está alineado verticalmente
-   * para evitar que se vaya hacia abajo.
-   */
-  const stats = [
-    ["ESTILO", profile.style],
-    ["PRESENCIA", profile.presence],
-    ["RAREZA", profile.rarity],
-    ["IMPACTO", profile.impact],
-  ] as const;
+  const stats: StatItem[] = [
+    {
+      name: "ESTILO",
+      value: profile.style,
+    },
+    {
+      name: "PRESENCIA",
+      value: profile.presence,
+    },
+    {
+      name: "RAREZA",
+      value: profile.rarity,
+    },
+    {
+      name: "IMPACTO",
+      value: profile.impact,
+    },
+  ];
 
   const gap = 14;
+
   const statWidth =
     (contentWidth - gap) / 2;
 
@@ -1204,7 +1153,7 @@ const createAuraCanvas = async (
   const statsY = 425;
 
   stats.forEach(
-    ([name, value], index) => {
+    ({ name, value }, index) => {
       const column = index % 2;
       const row = Math.floor(index / 2);
 
@@ -1239,9 +1188,6 @@ const createAuraCanvas = async (
         1
       );
 
-      /*
-       * Nombre del stat.
-       */
       drawText(
         ctx,
         name,
@@ -1256,9 +1202,6 @@ const createAuraCanvas = async (
         }
       );
 
-      /*
-       * Número.
-       */
       drawText(
         ctx,
         String(value),
@@ -1273,9 +1216,6 @@ const createAuraCanvas = async (
         }
       );
 
-      /*
-       * Barra.
-       */
       const barX = x + 16;
       const barY = y + 55;
       const barWidth =
@@ -1292,7 +1232,8 @@ const createAuraCanvas = async (
       );
 
       const progressWidth =
-        barWidth * (value / 100);
+        barWidth *
+        (value / 100);
 
       if (progressWidth > 0) {
         fillRoundRect(
@@ -1308,9 +1249,6 @@ const createAuraCanvas = async (
     }
   );
 
-  /*
-   * FOOTER.
-   */
   const footerY =
     height - 82;
 
@@ -1386,9 +1324,6 @@ export const FormAura = () => {
   const [qrCode, setQrCode] =
     useState<string | null>(null);
 
-  /*
-   * Cargar perfil desde URL.
-   */
   useEffect(() => {
     const params =
       new URLSearchParams(
@@ -1417,9 +1352,6 @@ export const FormAura = () => {
     setFromSharedLink(true);
   }, []);
 
-  /*
-   * QR.
-   */
   useEffect(() => {
     if (!profile) {
       setQrCode(null);
@@ -1450,9 +1382,6 @@ export const FormAura = () => {
       });
   }, [profile]);
 
-  /*
-   * Animación del aura.
-   */
   useEffect(() => {
     if (!profile) {
       return;
@@ -1511,11 +1440,6 @@ export const FormAura = () => {
     };
   }, [profile]);
 
-  /*
-   * Generar PNG.
-   *
-   * Ya NO usamos html2canvas.
-   */
   const createImageBlob =
     async () => {
       if (!profile) {
@@ -1540,9 +1464,6 @@ export const FormAura = () => {
       );
     };
 
-  /*
-   * Descargar.
-   */
   const downloadImage = async () => {
     if (
       !profile ||
@@ -1595,9 +1516,6 @@ export const FormAura = () => {
     }
   };
 
-  /*
-   * Compartir.
-   */
   const shareResult = async () => {
     if (
       !profile ||
@@ -1637,10 +1555,6 @@ export const FormAura = () => {
           profile.aura
         )} de aura 🗿 ¿Cuánto tenés vos?`;
 
-      /*
-       * Primero intentamos compartir
-       * el archivo.
-       */
       if (
         typeof navigator.share ===
           "function" &&
@@ -1660,10 +1574,6 @@ export const FormAura = () => {
         return;
       }
 
-      /*
-       * Si el navegador no acepta archivos,
-       * compartimos el enlace.
-       */
       if (
         typeof navigator.share ===
         "function"
@@ -1677,9 +1587,6 @@ export const FormAura = () => {
         return;
       }
 
-      /*
-       * Desktop fallback.
-       */
       const url =
         URL.createObjectURL(blob);
 
@@ -1719,9 +1626,6 @@ export const FormAura = () => {
     }
   };
 
-  /*
-   * Calcular aura.
-   */
   const checkAura = (
     e: React.FormEvent<HTMLFormElement>
   ) => {
@@ -1759,9 +1663,6 @@ export const FormAura = () => {
     }, 650);
   };
 
-  /*
-   * Reset.
-   */
   const reset = () => {
     setUsername("");
     setProfile(null);
@@ -1776,34 +1677,52 @@ export const FormAura = () => {
     );
   };
 
-  const statItems = profile
-    ? [
-        ["ESTILO", profile.style],
-        [
-          "PRESENCIA",
-          profile.presence,
-        ],
-        ["RAREZA", profile.rarity],
-        ["IMPACTO", profile.impact],
-      ]
-    : [];
+  const statItems: StatItem[] =
+    profile
+      ? [
+          {
+            name: "ESTILO",
+            value: profile.style,
+          },
+          {
+            name: "PRESENCIA",
+            value: profile.presence,
+          },
+          {
+            name: "RAREZA",
+            value: profile.rarity,
+          },
+          {
+            name: "IMPACTO",
+            value: profile.impact,
+          },
+        ]
+      : [];
 
   return (
-    <main className="relative min-h-[100svh] overflow-x-hidden bg-[#090a0e] text-white">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(88,101,242,0.12),transparent_30%),radial-gradient(circle_at_100%_100%,rgba(250,204,21,0.06),transparent_32%)]" />
+    <main className="relative min-h-[100svh] w-full max-w-full min-w-0 overflow-x-hidden bg-[#090a0e] text-white">
+      {/* BACKGROUND */}
 
-      <section className="relative z-10 flex min-h-[100svh] items-center justify-center px-4 py-8 sm:px-6">
-        <div className="w-full max-w-[440px]">
+      <div className="pointer-events-none fixed inset-0 z-0 w-full max-w-full overflow-hidden">
+        <div className="absolute -left-48 -top-48 h-[600px] w-[600px] max-w-[100vw] rounded-full bg-[#d4a017]/20 blur-[150px] animate-pulse" />
+
+        <div className="absolute -bottom-48 -right-48 h-[500px] w-[500px] max-w-[100vw] rounded-full bg-[#ffb700]/15 blur-[150px] animate-pulse" />
+
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(88,101,242,0.12),transparent_30%),radial-gradient(circle_at_100%_100%,rgba(250,204,21,0.06),transparent_32%)]" />
+      </div>
+
+      <section className="relative z-10 flex min-h-[100svh] w-full max-w-full min-w-0 items-center justify-center overflow-x-hidden px-4 py-8 sm:px-6">
+        <div className="w-full max-w-[440px] min-w-0">
           {!profile &&
             !loading && (
-              <div>
+              <div className="w-full min-w-0">
                 <div className="mb-8">
                   <div className="mb-6 flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#5865F2] text-sm font-black shadow-lg shadow-[#5865F2]/25">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#5865F2] text-sm font-black shadow-lg shadow-[#5865F2]/25">
                       A
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-sm font-bold text-white">
                         Aura Check
                       </p>
@@ -1814,7 +1733,7 @@ export const FormAura = () => {
                     </div>
                   </div>
 
-                  <h1 className="text-[32px] font-black leading-[1.05] tracking-[-0.04em] text-white">
+                  <h1 className="max-w-full text-[32px] font-black leading-[1.05] tracking-[-0.04em] text-white">
                     ¿Cuánta aura
                     <span className="block text-[#facc15]">
                       tiene tu nombre?
@@ -1830,17 +1749,17 @@ export const FormAura = () => {
 
                 <form
                   onSubmit={checkAura}
-                  className="overflow-hidden rounded-2xl border border-white/[0.09] bg-[#111318] shadow-2xl"
+                  className="w-full min-w-0 overflow-hidden rounded-2xl border border-white/[0.09] bg-[#111318] shadow-2xl"
                 >
-                  <div className="flex items-center gap-3 border-b border-white/[0.08] bg-[#171920] px-5 py-4">
-                    <span className="h-2 w-2 rounded-full bg-[#23a55a] shadow-[0_0_10px_rgba(35,165,90,0.5)]" />
+                  <div className="flex min-w-0 items-center gap-3 border-b border-white/[0.08] bg-[#171920] px-5 py-4">
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-[#23a55a] shadow-[0_0_10px_rgba(35,165,90,0.5)]" />
 
-                    <span className="text-[10px] font-bold tracking-[0.15em] text-white/45 uppercase">
+                    <span className="truncate text-[10px] font-bold tracking-[0.15em] text-white/45 uppercase">
                       ingresar usuario
                     </span>
                   </div>
 
-                  <div className="p-5">
+                  <div className="min-w-0 p-5">
                     <label
                       htmlFor="username"
                       className="mb-2.5 block text-xs font-semibold text-white/60"
@@ -1848,8 +1767,8 @@ export const FormAura = () => {
                       Tu nombre
                     </label>
 
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-white/35">
+                    <div className="relative min-w-0">
+                      <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-white/35">
                         @
                       </span>
 
@@ -1864,13 +1783,14 @@ export const FormAura = () => {
                         }
                         placeholder="maty.alvarez0k"
                         autoComplete="off"
-                        className="w-full rounded-xl border border-white/[0.09] bg-[#0a0b0f] py-3.5 pl-9 pr-4 text-sm font-medium text-white outline-none transition placeholder:text-white/25 focus:border-[#5865F2]/70 focus:bg-[#0c0d12]"
+                        className="box-border block w-full min-w-0 max-w-full rounded-xl border border-white/[0.09] bg-[#0a0b0f] py-3.5 pl-9 pr-4 text-sm font-medium text-white outline-none transition placeholder:text-white/25 focus:border-[#5865F2]/70 focus:bg-[#0c0d12]"
                       />
                     </div>
 
                     <button
                       type="submit"
-                      className="mt-3.5 w-full rounded-xl bg-[#5865F2] px-4 py-3.5 text-sm font-bold text-white transition hover:bg-[#4752c4] active:scale-[0.99]"
+                      disabled={loading}
+                      className="mt-3.5 block w-full min-w-0 rounded-xl bg-[#5865F2] px-4 py-3.5 text-sm font-bold text-white transition hover:bg-[#4752c4] active:scale-[0.99] disabled:opacity-50"
                     >
                       Ver mi aura
                     </button>
@@ -1885,8 +1805,8 @@ export const FormAura = () => {
             )}
 
           {loading && (
-            <div className="flex min-h-[440px] flex-col items-center justify-center text-center">
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-[#5865F2]/[0.08]">
+            <div className="flex min-h-[440px] w-full min-w-0 flex-col items-center justify-center overflow-hidden text-center">
+              <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[#5865F2]/[0.08]">
                 <div className="absolute inset-1 animate-spin rounded-full border-2 border-transparent border-t-[#facc15]" />
 
                 <span className="text-xl font-black text-white">
@@ -1898,7 +1818,7 @@ export const FormAura = () => {
                 analizando
               </p>
 
-              <p className="mt-2 text-sm text-white/45">
+              <p className="mt-2 max-w-full truncate px-4 text-sm text-white/45">
                 @{username}
               </p>
 
@@ -1910,14 +1830,14 @@ export const FormAura = () => {
 
           {profile &&
             !loading && (
-              <div>
+              <div className="w-full min-w-0 max-w-full">
                 {fromSharedLink && (
-                  <div className="mb-4 rounded-xl border border-[#5865F2]/25 bg-[#5865F2]/[0.08] px-4 py-3.5 text-center">
+                  <div className="mb-4 w-full min-w-0 overflow-hidden rounded-xl border border-[#5865F2]/25 bg-[#5865F2]/[0.08] px-4 py-3.5 text-center">
                     <p className="text-[10px] font-black tracking-[0.15em] text-[#9da5ff] uppercase">
                       te desafiaron
                     </p>
 
-                    <p className="mt-1 text-xs text-white/55">
+                    <p className="mt-1 truncate text-xs text-white/55">
                       Este es el resultado
                       de @{profile.username}
                     </p>
@@ -1925,9 +1845,10 @@ export const FormAura = () => {
                 )}
 
                 {/* CARD VISUAL */}
-                <div className="overflow-hidden rounded-2xl border border-white/[0.09] bg-[#111318] shadow-2xl">
-                  <div className="flex items-center justify-between gap-4 border-b border-white/[0.08] bg-[#171920] px-5 py-4">
-                    <div className="flex min-w-0 items-center gap-3">
+
+                <div className="w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-white/[0.09] bg-[#111318] shadow-2xl">
+                  <div className="flex min-w-0 max-w-full items-center justify-between gap-3 border-b border-white/[0.08] bg-[#171920] px-4 py-4 sm:px-5">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
                       <div
                         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xs font-black text-white"
                         style={{
@@ -1940,19 +1861,19 @@ export const FormAura = () => {
                         )}
                       </div>
 
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold text-white">
                           @{profile.username}
                         </p>
 
-                        <p className="mt-0.5 text-[10px] text-white/35">
+                        <p className="mt-0.5 truncate text-[10px] text-white/35">
                           resultado personal
                         </p>
                       </div>
                     </div>
 
                     <span
-                      className="shrink-0 text-[9px] font-black tracking-[0.14em]"
+                      className="max-w-[110px] shrink-0 truncate text-right text-[9px] font-black tracking-[0.14em]"
                       style={{
                         color:
                           profile.accent,
@@ -1962,22 +1883,22 @@ export const FormAura = () => {
                     </span>
                   </div>
 
-                  <div className="relative px-5 py-6 sm:px-6 sm:py-7">
-                    <div className="relative">
-                      <div className="flex items-end justify-between gap-4">
-                        <div className="min-w-0">
+                  <div className="relative min-w-0 max-w-full overflow-hidden px-4 py-6 sm:px-6 sm:py-7">
+                    <div className="relative min-w-0 max-w-full">
+                      <div className="flex min-w-0 max-w-full items-end justify-between gap-3">
+                        <div className="min-w-0 flex-1">
                           <p className="text-[9px] font-bold tracking-[0.2em] text-white/35 uppercase">
                             nivel de aura
                           </p>
 
-                          <div className="mt-2 flex items-end gap-2">
-                            <span className="text-[52px] font-black leading-none tracking-[-0.06em] text-white sm:text-6xl">
+                          <div className="mt-2 flex min-w-0 max-w-full items-end gap-2">
+                            <span className="min-w-0 max-w-full truncate text-[48px] font-black leading-none tracking-[-0.06em] text-white sm:text-6xl">
                               {formatAura(
                                 displayAura
                               )}
                             </span>
 
-                            <span className="pb-1 text-[11px] text-white/35">
+                            <span className="shrink-0 pb-1 text-[10px] text-white/35 sm:text-[11px]">
                               / 10.000
                             </span>
                           </div>
@@ -2005,46 +1926,50 @@ export const FormAura = () => {
                         </div>
                       </div>
 
-                      <div className="mt-6 h-2.5 overflow-hidden rounded-full bg-[#252830]">
+                      <div className="mt-6 h-2.5 w-full max-w-full overflow-hidden rounded-full bg-[#252830]">
                         <div
-                          className="h-full rounded-full"
+                          className="h-full max-w-full rounded-full"
                           style={{
-                            width: `${
+                            width: `${Math.min(
                               (displayAura /
                                 10000) *
+                                100,
                               100
-                            }%`,
+                            )}%`,
                             background:
                               "linear-gradient(90deg,#5865F2,#8b7cf6,#facc15)",
                           }}
                         />
                       </div>
 
-                      <div className="mt-6 rounded-xl border border-white/[0.05] bg-[#191b21] px-4 py-4">
-                        <p className="text-[15px] font-black leading-5 text-white sm:text-base">
+                      <div className="mt-6 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-white/[0.05] bg-[#191b21] px-4 py-4">
+                        <p className="break-words text-[15px] font-black leading-5 text-white sm:text-base">
                           {profile.message}
                         </p>
 
-                        <p className="mt-2 text-[10px] font-medium text-white/35">
+                        <p className="mt-2 truncate text-[10px] font-medium text-white/35">
                           {profile.rank} · firma
                           de aura
                         </p>
                       </div>
 
-                      <div className="mt-3 grid grid-cols-2 gap-2.5">
+                      <div className="mt-3 grid w-full min-w-0 max-w-full grid-cols-2 gap-2.5">
                         {statItems.map(
-                          ([name, value]) => (
+                          ({
+                            name,
+                            value,
+                          }) => (
                             <div
                               key={name}
-                              className="rounded-xl border border-white/[0.04] bg-[#191b21] px-3.5 py-3"
+                              className="min-w-0 overflow-hidden rounded-xl border border-white/[0.04] bg-[#191b21] px-3.5 py-3"
                             >
-                              <div className="flex items-center justify-between gap-2">
-                                <p className="text-[8px] font-bold tracking-[0.12em] text-white/35">
+                              <div className="flex min-w-0 items-center justify-between gap-2">
+                                <p className="min-w-0 truncate text-[8px] font-bold tracking-[0.12em] text-white/35">
                                   {name}
                                 </p>
 
                                 <p
-                                  className="text-xs font-black"
+                                  className="shrink-0 text-xs font-black"
                                   style={{
                                     color:
                                       profile.accent,
@@ -2054,11 +1979,17 @@ export const FormAura = () => {
                                 </p>
                               </div>
 
-                              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#292c34]">
+                              <div className="mt-2 h-1.5 w-full max-w-full overflow-hidden rounded-full bg-[#292c34]">
                                 <div
-                                  className="h-full rounded-full"
+                                  className="h-full max-w-full rounded-full"
                                   style={{
-                                    width: `${value}%`,
+                                    width: `${Math.min(
+                                      Math.max(
+                                        value,
+                                        0
+                                      ),
+                                      100
+                                    )}%`,
                                     backgroundColor:
                                       profile.accent,
                                   }}
@@ -2071,12 +2002,12 @@ export const FormAura = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between border-t border-white/[0.07] bg-[#0e0f13] px-5 py-3">
-                    <p className="text-[8px] font-black tracking-[0.2em] text-white/25">
+                  <div className="flex min-w-0 max-w-full items-center justify-between gap-3 overflow-hidden border-t border-white/[0.07] bg-[#0e0f13] px-4 py-3 sm:px-5">
+                    <p className="shrink-0 text-[8px] font-black tracking-[0.2em] text-white/25">
                       AURA CHECK
                     </p>
 
-                    <p className="text-[8px] font-medium text-white/25">
+                    <p className="min-w-0 truncate text-[8px] font-medium text-white/25">
                       aura.kodari.xyz
                     </p>
                   </div>
@@ -2086,7 +2017,7 @@ export const FormAura = () => {
                   type="button"
                   onClick={shareResult}
                   disabled={sharing}
-                  className="mt-4 w-full rounded-xl bg-[#5865F2] px-4 py-3.5 text-sm font-bold text-white transition hover:bg-[#4752c4] active:scale-[0.99] disabled:opacity-50"
+                  className="mt-4 block w-full min-w-0 rounded-xl bg-[#5865F2] px-4 py-3.5 text-sm font-bold text-white transition hover:bg-[#4752c4] active:scale-[0.99] disabled:opacity-50"
                 >
                   {sharing
                     ? "Preparando resultado..."
@@ -2097,14 +2028,14 @@ export const FormAura = () => {
                   type="button"
                   onClick={downloadImage}
                   disabled={downloading}
-                  className="mt-2.5 w-full rounded-xl border border-white/[0.09] bg-[#111318] px-4 py-3.5 text-sm font-semibold text-white/65 transition hover:bg-[#171920] hover:text-white disabled:opacity-50"
+                  className="mt-2.5 block w-full min-w-0 rounded-xl border border-white/[0.09] bg-[#111318] px-4 py-3.5 text-sm font-semibold text-white/65 transition hover:bg-[#171920] hover:text-white disabled:opacity-50"
                 >
                   {downloading
                     ? "Preparando imagen..."
                     : "📥 Descargar imagen"}
                 </button>
 
-                <div className="mt-5 rounded-2xl border border-white/[0.08] bg-[#111318] p-5">
+                <div className="mt-5 w-full min-w-0 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#111318] p-5">
                   <div className="text-center">
                     <p className="text-sm font-bold text-white/75">
                       ¿Y vos?
@@ -2117,8 +2048,8 @@ export const FormAura = () => {
                     </p>
                   </div>
 
-                  <div className="mt-5 flex items-center gap-4">
-                    <div className="min-w-0 flex-1">
+                  <div className="mt-5 flex min-w-0 items-center gap-4">
+                    <div className="min-w-0 flex-1 overflow-hidden">
                       <p className="text-[9px] font-bold tracking-[0.12em] text-white/30 uppercase">
                         tu resultado
                       </p>
@@ -2133,7 +2064,7 @@ export const FormAura = () => {
                       <img
                         src={qrCode}
                         alt="Código QR del resultado"
-                        className="h-[68px] w-[68px] shrink-0 rounded-lg"
+                        className="h-[68px] w-[68px] max-w-[68px] shrink-0 rounded-lg"
                       />
                     )}
                   </div>
@@ -2142,7 +2073,7 @@ export const FormAura = () => {
                 <button
                   type="button"
                   onClick={reset}
-                  className="mt-2 w-full py-3 text-xs font-medium text-white/30 transition hover:text-white/65"
+                  className="mt-2 block w-full py-3 text-xs font-medium text-white/30 transition hover:text-white/65"
                 >
                   Probar otro nombre
                 </button>
