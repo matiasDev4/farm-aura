@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import html2canvas from "html2canvas";
+import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 
 type AuraProfile = {
@@ -14,6 +13,11 @@ type AuraProfile = {
   message: string;
   accent: string;
 };
+
+type CanvasPaint =
+  | string
+  | CanvasGradient
+  | CanvasPattern;
 
 const SITE_URL = "https://aura.kodari.xyz";
 
@@ -531,6 +535,832 @@ const getProfileUrl = (
   )}`;
 };
 
+/* ============================================================
+   CANVAS
+   ============================================================ */
+
+const roundRect = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number
+) => {
+  const r = Math.min(
+    radius,
+    width / 2,
+    height / 2
+  );
+
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.quadraticCurveTo(
+    x + width,
+    y,
+    x + width,
+    y + r
+  );
+  ctx.lineTo(
+    x + width,
+    y + height - r
+  );
+  ctx.quadraticCurveTo(
+    x + width,
+    y + height,
+    x + width - r,
+    y + height
+  );
+  ctx.lineTo(
+    x + r,
+    y + height
+  );
+  ctx.quadraticCurveTo(
+    x,
+    y + height,
+    x,
+    y + height - r
+  );
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(
+    x,
+    y,
+    x + r,
+    y
+  );
+  ctx.closePath();
+};
+
+const fillRoundRect = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+  fillStyle: CanvasPaint
+) => {
+  roundRect(
+    ctx,
+    x,
+    y,
+    width,
+    height,
+    radius
+  );
+
+  ctx.fillStyle = fillStyle;
+  ctx.fill();
+};
+
+const strokeRoundRect = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+  strokeStyle: CanvasPaint,
+  lineWidth = 1
+) => {
+  roundRect(
+    ctx,
+    x,
+    y,
+    width,
+    height,
+    radius
+  );
+
+  ctx.strokeStyle = strokeStyle;
+  ctx.lineWidth = lineWidth;
+  ctx.stroke();
+};
+
+const drawText = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  options: {
+    size: number;
+    weight?: number;
+    color?: string;
+    align?: CanvasTextAlign;
+    baseline?: CanvasTextBaseline;
+    letterSpacing?: number;
+  }
+) => {
+  ctx.save();
+
+  ctx.font = `${options.weight ?? 400} ${options.size}px Inter, Arial, sans-serif`;
+
+  ctx.fillStyle =
+    options.color ?? "#ffffff";
+
+  ctx.textAlign =
+    options.align ?? "left";
+
+  ctx.textBaseline =
+    options.baseline ?? "alphabetic";
+
+  /*
+   * Canvas no tiene letter-spacing estándar.
+   * Para los textos normales no hace falta.
+   */
+  if (
+    !options.letterSpacing ||
+    options.letterSpacing === 0
+  ) {
+    ctx.fillText(text, x, y);
+    ctx.restore();
+    return;
+  }
+
+  const chars = [...text];
+  const widths = chars.map((char) =>
+    ctx.measureText(char).width
+  );
+
+  const total =
+    widths.reduce(
+      (sum, value) => sum + value,
+      0
+    ) +
+    options.letterSpacing *
+      Math.max(chars.length - 1, 0);
+
+  let cursor = x;
+
+  if (options.align === "center") {
+    cursor = x - total / 2;
+  } else if (options.align === "right") {
+    cursor = x - total;
+  }
+
+  chars.forEach((char, index) => {
+    ctx.fillText(
+      char,
+      cursor,
+      y
+    );
+
+    cursor +=
+      widths[index] +
+      options.letterSpacing!;
+  });
+
+  ctx.restore();
+};
+
+const wrapText = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number
+) => {
+  const words = text.split(" ");
+  const lines: string[] = [];
+
+  let current = "";
+
+  for (const word of words) {
+    const test = current
+      ? `${current} ${word}`
+      : word;
+
+    if (
+      ctx.measureText(test).width <=
+      maxWidth
+    ) {
+      current = test;
+    } else {
+      if (current) {
+        lines.push(current);
+      }
+
+      current = word;
+    }
+  }
+
+  if (current) {
+    lines.push(current);
+  }
+
+  return lines;
+};
+
+const createAuraCanvas = async (
+  profile: AuraProfile
+) => {
+  /*
+   * Tamaño final de la imagen.
+   *
+   * Se dibuja a 2x para obtener una imagen
+   * nítida en celulares y redes sociales.
+   */
+  const scale = 2;
+
+  const width = 880;
+  const height = 1160;
+
+  const canvas =
+    document.createElement("canvas");
+
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+
+  const ctx =
+    canvas.getContext("2d");
+
+  if (!ctx) {
+    throw new Error(
+      "No se pudo crear el contexto Canvas."
+    );
+  }
+
+  ctx.scale(scale, scale);
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+
+  /*
+   * Fondo.
+   */
+  ctx.fillStyle = "#090a0e";
+  ctx.fillRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+  /*
+   * Glow.
+   */
+  const glow =
+    ctx.createRadialGradient(
+      width - 80,
+      80,
+      20,
+      width - 80,
+      80,
+      420
+    );
+
+  glow.addColorStop(
+    0,
+    `${profile.accent}28`
+  );
+
+  glow.addColorStop(
+    1,
+    "#090a0e00"
+  );
+
+  ctx.fillStyle = glow;
+
+  ctx.fillRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+  /*
+   * CARD PRINCIPAL.
+   *
+   * Importante:
+   * no usamos stroke directamente sobre
+   * el borde exterior porque eso puede
+   * hacer que visualmente parezca más
+   * grueso.
+   *
+   * En cambio dibujamos primero el fondo
+   * y después una línea de 1px centrada.
+   */
+  fillRoundRect(
+    ctx,
+    20,
+    20,
+    width - 40,
+    height - 40,
+    30,
+    "#111318"
+  );
+
+  strokeRoundRect(
+    ctx,
+    20.5,
+    20.5,
+    width - 41,
+    height - 41,
+    29.5,
+    "#ffffff16",
+    1
+  );
+
+  /*
+   * HEADER.
+   */
+  fillRoundRect(
+    ctx,
+    21,
+    21,
+    width - 42,
+    98,
+    29,
+    "#171920"
+  );
+
+  /*
+   * Tapamos la parte inferior del rounded
+   * header para que quede recto.
+   */
+  ctx.fillStyle = "#171920";
+  ctx.fillRect(
+    21,
+    80,
+    width - 42,
+    39
+  );
+
+  /*
+   * Separador.
+   */
+  ctx.fillStyle = "#ffffff12";
+  ctx.fillRect(
+    21,
+    118,
+    width - 42,
+    1
+  );
+
+  /*
+   * Avatar.
+   */
+  ctx.beginPath();
+  ctx.arc(
+    75,
+    69,
+    25,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fillStyle =
+    profile.accent;
+
+  ctx.fill();
+
+  drawText(
+    ctx,
+    getInitials(profile.username),
+    75,
+    69,
+    {
+      size: 13,
+      weight: 900,
+      color: "#ffffff",
+      align: "center",
+      baseline: "middle",
+    }
+  );
+
+  /*
+   * USERNAME.
+   *
+   * Tiene una zona independiente.
+   * Esto evita que el rank lo tape.
+   */
+  drawText(
+    ctx,
+    `@${profile.username}`,
+    115,
+    64,
+    {
+      size: 17,
+      weight: 700,
+      color: "#ffffff",
+      baseline: "middle",
+    }
+  );
+
+  drawText(
+    ctx,
+    "resultado personal",
+    115,
+    87,
+    {
+      size: 11,
+      weight: 400,
+      color: "#ffffff59",
+      baseline: "middle",
+    }
+  );
+
+  /*
+   * RANK.
+   *
+   * Lo ubicamos siempre dentro de un
+   * espacio de 190px.
+   */
+  drawText(
+    ctx,
+    profile.rank,
+    width - 55,
+    69,
+    {
+      size: 11,
+      weight: 900,
+      color: profile.accent,
+      align: "right",
+      baseline: "middle",
+      letterSpacing: 1.5,
+    }
+  );
+
+  /*
+   * CONTENIDO.
+   */
+  const contentX = 55;
+  const contentWidth =
+    width - 110;
+
+  drawText(
+    ctx,
+    "NIVEL DE AURA",
+    contentX,
+    165,
+    {
+      size: 11,
+      weight: 700,
+      color: "#ffffff59",
+      letterSpacing: 2,
+    }
+  );
+
+  /*
+   * Aura.
+   */
+  drawText(
+    ctx,
+    formatAura(profile.aura),
+    contentX,
+    225,
+    {
+      size: 65,
+      weight: 900,
+      color: "#ffffff",
+      baseline: "alphabetic",
+    }
+  );
+
+  drawText(
+    ctx,
+    "/ 10.000",
+    370,
+    220,
+    {
+      size: 12,
+      weight: 400,
+      color: "#ffffff59",
+      baseline: "alphabetic",
+    }
+  );
+
+  /*
+   * Porcentaje.
+   */
+  drawText(
+    ctx,
+    `${Math.round(
+      (profile.aura / 10000) * 100
+    )}%`,
+    width - 55,
+    198,
+    {
+      size: 25,
+      weight: 900,
+      color: profile.accent,
+      align: "right",
+    }
+  );
+
+  drawText(
+    ctx,
+    "intensidad",
+    width - 55,
+    220,
+    {
+      size: 10,
+      weight: 500,
+      color: "#ffffff4d",
+      align: "right",
+    }
+  );
+
+  /*
+   * Barra de aura.
+   */
+  fillRoundRect(
+    ctx,
+    contentX,
+    250,
+    contentWidth,
+    11,
+    6,
+    "#252830"
+  );
+
+  const auraGradient =
+    ctx.createLinearGradient(
+      contentX,
+      0,
+      contentX + contentWidth,
+      0
+    );
+
+  auraGradient.addColorStop(
+    0,
+    "#5865F2"
+  );
+
+  auraGradient.addColorStop(
+    0.55,
+    "#8b7cf6"
+  );
+
+  auraGradient.addColorStop(
+    1,
+    "#facc15"
+  );
+
+  const auraWidth =
+    contentWidth *
+    (profile.aura / 10000);
+
+  if (auraWidth > 0) {
+    fillRoundRect(
+      ctx,
+      contentX,
+      250,
+      auraWidth,
+      11,
+      6,
+      auraGradient
+    );
+  }
+
+  /*
+   * MESSAGE BOX.
+   */
+  const messageY = 290;
+  const messageHeight = 115;
+
+  fillRoundRect(
+    ctx,
+    contentX,
+    messageY,
+    contentWidth,
+    messageHeight,
+    18,
+    "#191b21"
+  );
+
+  strokeRoundRect(
+    ctx,
+    contentX + 0.5,
+    messageY + 0.5,
+    contentWidth - 1,
+    messageHeight - 1,
+    17.5,
+    "#ffffff0d",
+    1
+  );
+
+  ctx.font =
+    "900 19px Inter, Arial, sans-serif";
+
+  const messageLines =
+    wrapText(
+      ctx,
+      profile.message,
+      contentWidth - 48
+    );
+
+  const maxMessageLines =
+    Math.min(messageLines.length, 3);
+
+  messageLines
+    .slice(0, maxMessageLines)
+    .forEach((line, index) => {
+      drawText(
+        ctx,
+        line,
+        contentX + 24,
+        messageY +
+          38 +
+          index * 25,
+        {
+          size: 19,
+          weight: 900,
+          color: "#ffffff",
+        }
+      );
+    });
+
+  drawText(
+    ctx,
+    `${profile.rank} · firma de aura`,
+    contentX + 24,
+    messageY + 91,
+    {
+      size: 10,
+      weight: 500,
+      color: "#ffffff59",
+    }
+  );
+
+  /*
+   * BADGES / STATS.
+   *
+   * Cada tarjeta tiene altura fija.
+   * El texto está alineado verticalmente
+   * para evitar que se vaya hacia abajo.
+   */
+  const stats = [
+    ["ESTILO", profile.style],
+    ["PRESENCIA", profile.presence],
+    ["RAREZA", profile.rarity],
+    ["IMPACTO", profile.impact],
+  ] as const;
+
+  const gap = 14;
+  const statWidth =
+    (contentWidth - gap) / 2;
+
+  const statHeight = 92;
+  const statsY = 425;
+
+  stats.forEach(
+    ([name, value], index) => {
+      const column = index % 2;
+      const row = Math.floor(index / 2);
+
+      const x =
+        contentX +
+        column *
+          (statWidth + gap);
+
+      const y =
+        statsY +
+        row *
+          (statHeight + gap);
+
+      fillRoundRect(
+        ctx,
+        x,
+        y,
+        statWidth,
+        statHeight,
+        16,
+        "#191b21"
+      );
+
+      strokeRoundRect(
+        ctx,
+        x + 0.5,
+        y + 0.5,
+        statWidth - 1,
+        statHeight - 1,
+        15.5,
+        "#ffffff0a",
+        1
+      );
+
+      /*
+       * Nombre del stat.
+       */
+      drawText(
+        ctx,
+        name,
+        x + 16,
+        y + 26,
+        {
+          size: 9,
+          weight: 700,
+          color: "#ffffff59",
+          baseline: "middle",
+          letterSpacing: 1,
+        }
+      );
+
+      /*
+       * Número.
+       */
+      drawText(
+        ctx,
+        String(value),
+        x + statWidth - 16,
+        y + 26,
+        {
+          size: 15,
+          weight: 900,
+          color: profile.accent,
+          align: "right",
+          baseline: "middle",
+        }
+      );
+
+      /*
+       * Barra.
+       */
+      const barX = x + 16;
+      const barY = y + 55;
+      const barWidth =
+        statWidth - 32;
+
+      fillRoundRect(
+        ctx,
+        barX,
+        barY,
+        barWidth,
+        7,
+        4,
+        "#292c34"
+      );
+
+      const progressWidth =
+        barWidth * (value / 100);
+
+      if (progressWidth > 0) {
+        fillRoundRect(
+          ctx,
+          barX,
+          barY,
+          progressWidth,
+          7,
+          4,
+          profile.accent
+        );
+      }
+    }
+  );
+
+  /*
+   * FOOTER.
+   */
+  const footerY =
+    height - 82;
+
+  ctx.fillStyle = "#0e0f13";
+
+  ctx.fillRect(
+    21,
+    footerY,
+    width - 42,
+    61
+  );
+
+  ctx.fillStyle = "#ffffff12";
+
+  ctx.fillRect(
+    21,
+    footerY,
+    width - 42,
+    1
+  );
+
+  drawText(
+    ctx,
+    "AURA CHECK",
+    contentX,
+    footerY + 36,
+    {
+      size: 10,
+      weight: 900,
+      color: "#ffffff40",
+      letterSpacing: 2,
+    }
+  );
+
+  drawText(
+    ctx,
+    "aura.kodari.xyz",
+    width - 55,
+    footerY + 36,
+    {
+      size: 10,
+      weight: 500,
+      color: "#ffffff40",
+      align: "right",
+    }
+  );
+
+  return canvas;
+};
+
 export const FormAura = () => {
   const [username, setUsername] =
     useState("");
@@ -556,9 +1386,9 @@ export const FormAura = () => {
   const [qrCode, setQrCode] =
     useState<string | null>(null);
 
-  const shareCardRef =
-    useRef<HTMLDivElement>(null);
-
+  /*
+   * Cargar perfil desde URL.
+   */
   useEffect(() => {
     const params =
       new URLSearchParams(
@@ -573,9 +1403,7 @@ export const FormAura = () => {
     }
 
     const clean =
-      cleanUsername(
-        sharedUsername
-      );
+      cleanUsername(sharedUsername);
 
     if (!clean) {
       return;
@@ -589,25 +1417,28 @@ export const FormAura = () => {
     setFromSharedLink(true);
   }, []);
 
+  /*
+   * QR.
+   */
   useEffect(() => {
     if (!profile) {
       setQrCode(null);
       return;
     }
 
-    const url =
+    QRCode.toDataURL(
       getProfileUrl(
         profile.username
-      );
-
-    QRCode.toDataURL(url, {
-      width: 280,
-      margin: 2,
-      color: {
-        dark: "#ffffff",
-        light: "#111318",
-      },
-    })
+      ),
+      {
+        width: 280,
+        margin: 2,
+        color: {
+          dark: "#ffffff",
+          light: "#111318",
+        },
+      }
+    )
       .then((value) => {
         setQrCode(value);
       })
@@ -619,6 +1450,9 @@ export const FormAura = () => {
       });
   }, [profile]);
 
+  /*
+   * Animación del aura.
+   */
   useEffect(() => {
     if (!profile) {
       return;
@@ -677,99 +1511,144 @@ export const FormAura = () => {
     };
   }, [profile]);
 
-  const createCanvas = async () => {
-    const element = shareCardRef.current;
+  /*
+   * Generar PNG.
+   *
+   * Ya NO usamos html2canvas.
+   */
+  const createImageBlob =
+    async () => {
+      if (!profile) {
+        throw new Error(
+          "No existe un perfil."
+        );
+      }
 
-    if (!element) {
-      throw new Error("No se encontró la card de resultado.");
-    }
+      const canvas =
+        await createAuraCanvas(
+          profile
+        );
 
-    if (document.fonts?.ready) {
-      await document.fonts.ready;
-    }
+      return new Promise<Blob | null>(
+        (resolve) => {
+          canvas.toBlob(
+            resolve,
+            "image/png",
+            1
+          );
+        }
+      );
+    };
 
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => resolve());
-      });
-    });
-
-    return html2canvas(element, {
-      backgroundColor: "#111318",
-      scale: 3,
-      useCORS: true,
-      allowTaint: false,
-      logging: false,
-      scrollX: 0,
-      scrollY: 0,
-    });
-  };
-
+  /*
+   * Descargar.
+   */
   const downloadImage = async () => {
-    if (!profile || downloading) {
+    if (
+      !profile ||
+      downloading
+    ) {
       return;
     }
 
     try {
       setDownloading(true);
 
-      const canvas = await createCanvas();
-      const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob(resolve, "image/png", 1);
-      });
+      const blob =
+        await createImageBlob();
 
       if (!blob) {
-        throw new Error("No se pudo generar el PNG.");
+        throw new Error(
+          "No se pudo generar el PNG."
+        );
       }
 
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const url =
+        URL.createObjectURL(blob);
+
+      const link =
+        document.createElement("a");
+
       link.href = url;
-      link.download = `aura-${profile.username}.png`;
+
+      link.download =
+        `aura-${profile.username}.png`;
+
       link.style.display = "none";
+
       document.body.appendChild(link);
+
       link.click();
+
       link.remove();
 
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 1000);
     } catch (error) {
-      console.error("No se pudo descargar la imagen:", error);
+      console.error(
+        "No se pudo descargar:",
+        error
+      );
     } finally {
       setDownloading(false);
     }
   };
 
+  /*
+   * Compartir.
+   */
   const shareResult = async () => {
-    if (!profile || sharing) {
+    if (
+      !profile ||
+      sharing
+    ) {
       return;
     }
 
     try {
       setSharing(true);
 
-      const canvas = await createCanvas();
-      const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob(resolve, "image/png", 1);
-      });
+      const blob =
+        await createImageBlob();
 
       if (!blob) {
-        throw new Error("No se pudo generar el PNG.");
+        throw new Error(
+          "No se pudo generar el PNG."
+        );
       }
 
-      const file = new File(
-        [blob],
-        `aura-${profile.username}.png`,
-        { type: "image/png" }
-      );
+      const file =
+        new File(
+          [blob],
+          `aura-${profile.username}.png`,
+          {
+            type: "image/png",
+          }
+        );
 
-      const shareUrl = getProfileUrl(profile.username);
+      const shareUrl =
+        getProfileUrl(
+          profile.username
+        );
+
       const shareText =
-        `@${profile.username} tiene ${formatAura(profile.aura)} de aura 🗿 ¿Cuánto tenés vos?`;
+        `@${profile.username} tiene ${formatAura(
+          profile.aura
+        )} de aura 🗿 ¿Cuánto tenés vos?`;
 
+      /*
+       * Primero intentamos compartir
+       * el archivo.
+       */
       if (
-        typeof navigator.share === "function" &&
-        typeof navigator.canShare === "function" &&
-        navigator.canShare({ files: [file] })
+        typeof navigator.share ===
+          "function" &&
+        typeof navigator.canShare ===
+          "function" &&
+        navigator.canShare({
+          files: [file],
+        })
       ) {
         await navigator.share({
           title: "Aura Check",
@@ -777,39 +1656,72 @@ export const FormAura = () => {
           url: shareUrl,
           files: [file],
         });
+
         return;
       }
 
-      if (typeof navigator.share === "function") {
+      /*
+       * Si el navegador no acepta archivos,
+       * compartimos el enlace.
+       */
+      if (
+        typeof navigator.share ===
+        "function"
+      ) {
         await navigator.share({
           title: "Aura Check",
           text: shareText,
           url: shareUrl,
         });
+
         return;
       }
 
-      // Desktop browsers sin Web Share: descargar como fallback.
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      /*
+       * Desktop fallback.
+       */
+      const url =
+        URL.createObjectURL(blob);
+
+      const link =
+        document.createElement("a");
+
       link.href = url;
-      link.download = `aura-${profile.username}.png`;
+
+      link.download =
+        `aura-${profile.username}.png`;
+
       link.style.display = "none";
+
       document.body.appendChild(link);
+
       link.click();
+
       link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 1000);
     } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
+      if (
+        error instanceof Error &&
+        error.name === "AbortError"
+      ) {
         return;
       }
 
-      console.error("No se pudo compartir:", error);
+      console.error(
+        "No se pudo compartir:",
+        error
+      );
     } finally {
       setSharing(false);
     }
   };
 
+  /*
+   * Calcular aura.
+   */
   const checkAura = (
     e: React.FormEvent<HTMLFormElement>
   ) => {
@@ -847,6 +1759,9 @@ export const FormAura = () => {
     }, 650);
   };
 
+  /*
+   * Reset.
+   */
   const reset = () => {
     setUsername("");
     setProfile(null);
@@ -864,7 +1779,10 @@ export const FormAura = () => {
   const statItems = profile
     ? [
         ["ESTILO", profile.style],
-        ["PRESENCIA", profile.presence],
+        [
+          "PRESENCIA",
+          profile.presence,
+        ],
         ["RAREZA", profile.rarity],
         ["IMPACTO", profile.impact],
       ]
@@ -876,94 +1794,95 @@ export const FormAura = () => {
 
       <section className="relative z-10 flex min-h-[100svh] items-center justify-center px-4 py-8 sm:px-6">
         <div className="w-full max-w-[440px]">
-          {!profile && !loading && (
-            <div>
-              <div className="mb-8">
-                <div className="mb-6 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#5865F2] text-sm font-black shadow-lg shadow-[#5865F2]/25">
-                    A
+          {!profile &&
+            !loading && (
+              <div>
+                <div className="mb-8">
+                  <div className="mb-6 flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#5865F2] text-sm font-black shadow-lg shadow-[#5865F2]/25">
+                      A
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-bold text-white">
+                        Aura Check
+                      </p>
+
+                      <p className="mt-0.5 text-[11px] text-white/40">
+                        análisis de presencia
+                      </p>
+                    </div>
                   </div>
 
-                  <div>
-                    <p className="text-sm font-bold text-white">
-                      Aura Check
-                    </p>
+                  <h1 className="text-[32px] font-black leading-[1.05] tracking-[-0.04em] text-white">
+                    ¿Cuánta aura
+                    <span className="block text-[#facc15]">
+                      tiene tu nombre?
+                    </span>
+                  </h1>
 
-                    <p className="mt-0.5 text-[11px] text-white/40">
-                      análisis de presencia
-                    </p>
-                  </div>
+                  <p className="mt-4 max-w-[390px] text-sm leading-6 text-white/50">
+                    Escribí tu usuario y
+                    descubrí qué tanta
+                    presencia tiene.
+                  </p>
                 </div>
 
-                <h1 className="text-[32px] font-black leading-[1.05] tracking-[-0.04em] text-white">
-                  ¿Cuánta aura
-                  <span className="block text-[#facc15]">
-                    tiene tu nombre?
-                  </span>
-                </h1>
+                <form
+                  onSubmit={checkAura}
+                  className="overflow-hidden rounded-2xl border border-white/[0.09] bg-[#111318] shadow-2xl"
+                >
+                  <div className="flex items-center gap-3 border-b border-white/[0.08] bg-[#171920] px-5 py-4">
+                    <span className="h-2 w-2 rounded-full bg-[#23a55a] shadow-[0_0_10px_rgba(35,165,90,0.5)]" />
 
-                <p className="mt-4 max-w-[390px] text-sm leading-6 text-white/50">
-                  Escribí tu usuario y
-                  descubrí qué tanta
-                  presencia tiene.
+                    <span className="text-[10px] font-bold tracking-[0.15em] text-white/45 uppercase">
+                      ingresar usuario
+                    </span>
+                  </div>
+
+                  <div className="p-5">
+                    <label
+                      htmlFor="username"
+                      className="mb-2.5 block text-xs font-semibold text-white/60"
+                    >
+                      Tu nombre
+                    </label>
+
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-white/35">
+                        @
+                      </span>
+
+                      <input
+                        id="username"
+                        type="text"
+                        value={username}
+                        onChange={(e) =>
+                          setUsername(
+                            e.target.value
+                          )
+                        }
+                        placeholder="maty.alvarez0k"
+                        autoComplete="off"
+                        className="w-full rounded-xl border border-white/[0.09] bg-[#0a0b0f] py-3.5 pl-9 pr-4 text-sm font-medium text-white outline-none transition placeholder:text-white/25 focus:border-[#5865F2]/70 focus:bg-[#0c0d12]"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="mt-3.5 w-full rounded-xl bg-[#5865F2] px-4 py-3.5 text-sm font-bold text-white transition hover:bg-[#4752c4] active:scale-[0.99]"
+                    >
+                      Ver mi aura
+                    </button>
+                  </div>
+                </form>
+
+                <p className="mt-5 text-center text-[11px] text-white/30">
+                  Cada nombre tiene una
+                  firma diferente.
                 </p>
               </div>
-
-              <form
-                onSubmit={checkAura}
-                className="overflow-hidden rounded-2xl border border-white/[0.09] bg-[#111318] shadow-2xl"
-              >
-                <div className="flex items-center gap-3 border-b border-white/[0.08] bg-[#171920] px-5 py-4">
-                  <span className="h-2 w-2 rounded-full bg-[#23a55a] shadow-[0_0_10px_rgba(35,165,90,0.5)]" />
-
-                  <span className="text-[10px] font-bold tracking-[0.15em] text-white/45 uppercase">
-                    ingresar usuario
-                  </span>
-                </div>
-
-                <div className="p-5">
-                  <label
-                    htmlFor="username"
-                    className="mb-2.5 block text-xs font-semibold text-white/60"
-                  >
-                    Tu nombre
-                  </label>
-
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-white/35">
-                      @
-                    </span>
-
-                    <input
-                      id="username"
-                      type="text"
-                      value={username}
-                      onChange={(e) =>
-                        setUsername(
-                          e.target.value
-                        )
-                      }
-                      placeholder="maty.alvarez0k"
-                      autoComplete="off"
-                      className="w-full rounded-xl border border-white/[0.09] bg-[#0a0b0f] py-3.5 pl-9 pr-4 text-sm font-medium text-white outline-none transition placeholder:text-white/25 focus:border-[#5865F2]/70 focus:bg-[#0c0d12]"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="mt-3.5 w-full rounded-xl bg-[#5865F2] px-4 py-3.5 text-sm font-bold text-white transition hover:bg-[#4752c4] active:scale-[0.99]"
-                  >
-                    Ver mi aura
-                  </button>
-                </div>
-              </form>
-
-              <p className="mt-5 text-center text-[11px] text-white/30">
-                Cada nombre tiene una
-                firma diferente.
-              </p>
-            </div>
-          )}
+            )}
 
           {loading && (
             <div className="flex min-h-[440px] flex-col items-center justify-center text-center">
@@ -989,259 +1908,248 @@ export const FormAura = () => {
             </div>
           )}
 
-          {profile && !loading && (
-            <div>
-              {fromSharedLink && (
-                <div className="mb-4 rounded-xl border border-[#5865F2]/25 bg-[#5865F2]/[0.08] px-4 py-3.5 text-center">
-                  <p className="text-[10px] font-black tracking-[0.15em] text-[#9da5ff] uppercase">
-                    te desafiaron
-                  </p>
+          {profile &&
+            !loading && (
+              <div>
+                {fromSharedLink && (
+                  <div className="mb-4 rounded-xl border border-[#5865F2]/25 bg-[#5865F2]/[0.08] px-4 py-3.5 text-center">
+                    <p className="text-[10px] font-black tracking-[0.15em] text-[#9da5ff] uppercase">
+                      te desafiaron
+                    </p>
 
-                  <p className="mt-1 text-xs text-white/55">
-                    Este es el resultado
-                    de @{profile.username}
-                  </p>
-                </div>
-              )}
+                    <p className="mt-1 text-xs text-white/55">
+                      Este es el resultado
+                      de @{profile.username}
+                    </p>
+                  </div>
+                )}
 
-              <div
-                ref={shareCardRef}
-                className="overflow-hidden rounded-2xl border border-white/[0.09] bg-[#111318] shadow-2xl"
-              >
-                <div className="flex items-center justify-between gap-4 border-b border-white/[0.08] bg-[#171920] px-5 py-4">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xs font-black text-white"
+                {/* CARD VISUAL */}
+                <div className="overflow-hidden rounded-2xl border border-white/[0.09] bg-[#111318] shadow-2xl">
+                  <div className="flex items-center justify-between gap-4 border-b border-white/[0.08] bg-[#171920] px-5 py-4">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xs font-black text-white"
+                        style={{
+                          backgroundColor:
+                            profile.accent,
+                        }}
+                      >
+                        {getInitials(
+                          profile.username
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-white">
+                          @{profile.username}
+                        </p>
+
+                        <p className="mt-0.5 text-[10px] text-white/35">
+                          resultado personal
+                        </p>
+                      </div>
+                    </div>
+
+                    <span
+                      className="shrink-0 text-[9px] font-black tracking-[0.14em]"
                       style={{
-                        backgroundColor:
+                        color:
                           profile.accent,
                       }}
                     >
-                      {getInitials(
-                        profile.username
-                      )}
-                    </div>
-
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-white">
-                        @{profile.username}
-                      </p>
-
-                      <p className="mt-0.5 text-[10px] text-white/35">
-                        resultado personal
-                      </p>
-                    </div>
+                      {profile.rank}
+                    </span>
                   </div>
 
-                  <span
-                    className="shrink-0 text-[9px] font-black tracking-[0.14em]"
-                    style={{
-                      color:
-                        profile.accent,
-                    }}
-                  >
-                    {profile.rank}
-                  </span>
-                </div>
+                  <div className="relative px-5 py-6 sm:px-6 sm:py-7">
+                    <div className="relative">
+                      <div className="flex items-end justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="text-[9px] font-bold tracking-[0.2em] text-white/35 uppercase">
+                            nivel de aura
+                          </p>
 
-                <div className="relative px-5 py-6 sm:px-6 sm:py-7">
-                  <div
-                    className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full blur-[90px]"
-                    style={{
-                      backgroundColor:
-                        profile.accent,
-                      opacity: 0.1,
-                    }}
-                  />
+                          <div className="mt-2 flex items-end gap-2">
+                            <span className="text-[52px] font-black leading-none tracking-[-0.06em] text-white sm:text-6xl">
+                              {formatAura(
+                                displayAura
+                              )}
+                            </span>
 
-                  <div className="relative">
-                    <div className="flex items-end justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="text-[9px] font-bold tracking-[0.2em] text-white/35 uppercase">
-                          nivel de aura
-                        </p>
+                            <span className="pb-1 text-[11px] text-white/35">
+                              / 10.000
+                            </span>
+                          </div>
+                        </div>
 
-                        <div className="mt-2 flex items-end gap-2">
-                          <span className="text-[52px] font-black leading-none tracking-[-0.06em] text-white sm:text-6xl">
-                            {formatAura(
-                              displayAura
+                        <div className="shrink-0 text-right">
+                          <p
+                            className="text-xl font-black"
+                            style={{
+                              color:
+                                profile.accent,
+                            }}
+                          >
+                            {Math.round(
+                              (profile.aura /
+                                10000) *
+                                100
                             )}
-                          </span>
+                            %
+                          </p>
 
-                          <span className="pb-1 text-[11px] text-white/35">
-                            / 10.000
-                          </span>
+                          <p className="mt-1 text-[9px] font-medium text-white/30">
+                            intensidad
+                          </p>
                         </div>
                       </div>
 
-                      <div className="shrink-0 text-right">
-                        <p
-                          className="text-xl font-black"
+                      <div className="mt-6 h-2.5 overflow-hidden rounded-full bg-[#252830]">
+                        <div
+                          className="h-full rounded-full"
                           style={{
-                            color:
-                              profile.accent,
-                          }}
-                        >
-                          {Math.round(
-                            (profile.aura /
-                              10000) *
+                            width: `${
+                              (displayAura /
+                                10000) *
                               100
-                          )}
-                          %
+                            }%`,
+                            background:
+                              "linear-gradient(90deg,#5865F2,#8b7cf6,#facc15)",
+                          }}
+                        />
+                      </div>
+
+                      <div className="mt-6 rounded-xl border border-white/[0.05] bg-[#191b21] px-4 py-4">
+                        <p className="text-[15px] font-black leading-5 text-white sm:text-base">
+                          {profile.message}
                         </p>
 
-                        <p className="mt-1 text-[9px] font-medium text-white/30">
-                          intensidad
+                        <p className="mt-2 text-[10px] font-medium text-white/35">
+                          {profile.rank} · firma
+                          de aura
                         </p>
                       </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-2.5">
+                        {statItems.map(
+                          ([name, value]) => (
+                            <div
+                              key={name}
+                              className="rounded-xl border border-white/[0.04] bg-[#191b21] px-3.5 py-3"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-[8px] font-bold tracking-[0.12em] text-white/35">
+                                  {name}
+                                </p>
+
+                                <p
+                                  className="text-xs font-black"
+                                  style={{
+                                    color:
+                                      profile.accent,
+                                  }}
+                                >
+                                  {value}
+                                </p>
+                              </div>
+
+                              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#292c34]">
+                                <div
+                                  className="h-full rounded-full"
+                                  style={{
+                                    width: `${value}%`,
+                                    backgroundColor:
+                                      profile.accent,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-white/[0.07] bg-[#0e0f13] px-5 py-3">
+                    <p className="text-[8px] font-black tracking-[0.2em] text-white/25">
+                      AURA CHECK
+                    </p>
+
+                    <p className="text-[8px] font-medium text-white/25">
+                      aura.kodari.xyz
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={shareResult}
+                  disabled={sharing}
+                  className="mt-4 w-full rounded-xl bg-[#5865F2] px-4 py-3.5 text-sm font-bold text-white transition hover:bg-[#4752c4] active:scale-[0.99] disabled:opacity-50"
+                >
+                  {sharing
+                    ? "Preparando resultado..."
+                    : "📸 Compartir resultado"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={downloadImage}
+                  disabled={downloading}
+                  className="mt-2.5 w-full rounded-xl border border-white/[0.09] bg-[#111318] px-4 py-3.5 text-sm font-semibold text-white/65 transition hover:bg-[#171920] hover:text-white disabled:opacity-50"
+                >
+                  {downloading
+                    ? "Preparando imagen..."
+                    : "📥 Descargar imagen"}
+                </button>
+
+                <div className="mt-5 rounded-2xl border border-white/[0.08] bg-[#111318] p-5">
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-white/75">
+                      ¿Y vos?
+                    </p>
+
+                    <p className="mt-1.5 text-[11px] leading-5 text-white/40">
+                      Compartí tu resultado
+                      y hacé que tus amigos
+                      descubran el suyo.
+                    </p>
+                  </div>
+
+                  <div className="mt-5 flex items-center gap-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[9px] font-bold tracking-[0.12em] text-white/30 uppercase">
+                        tu resultado
+                      </p>
+
+                      <p className="mt-1.5 truncate text-xs text-white/50">
+                        aura.kodari.xyz/?u=
+                        {profile.username}
+                      </p>
                     </div>
 
-                    <div className="mt-6 h-2.5 overflow-hidden rounded-full bg-[#252830]">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${
-                            (displayAura /
-                              10000) *
-                            100
-                          }%`,
-                          background:
-                            "linear-gradient(90deg,#5865F2,#8b7cf6,#facc15)",
-                        }}
+                    {qrCode && (
+                      <img
+                        src={qrCode}
+                        alt="Código QR del resultado"
+                        className="h-[68px] w-[68px] shrink-0 rounded-lg"
                       />
-                    </div>
-
-                    <div className="mt-6 rounded-xl border border-white/[0.05] bg-[#191b21] px-4 py-4">
-                      <p className="text-[15px] font-black leading-5 text-white sm:text-base">
-                        {profile.message}
-                      </p>
-
-                      <p className="mt-2 text-[10px] font-medium text-white/35">
-                        {profile.rank} · firma
-                        de aura
-                      </p>
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-2 gap-2.5">
-                      {statItems.map(
-                        ([name, value]) => (
-                          <div
-                            key={name}
-                            className="rounded-xl border border-white/[0.04] bg-[#191b21] px-3.5 py-3"
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="text-[8px] font-bold tracking-[0.12em] text-white/35">
-                                {name}
-                              </p>
-
-                              <p
-                                className="text-xs font-black"
-                                style={{
-                                  color:
-                                    profile.accent,
-                                }}
-                              >
-                                {value}
-                              </p>
-                            </div>
-
-                            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#292c34]">
-                              <div
-                                className="h-full rounded-full"
-                                style={{
-                                  width: `${value}%`,
-                                  backgroundColor:
-                                    profile.accent,
-                                }}
-                              />
-                            </div>
-                          </div>
-                        )
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between border-t border-white/[0.07] bg-[#0e0f13] px-5 py-3">
-                  <p className="text-[8px] font-black tracking-[0.2em] text-white/25">
-                    AURA CHECK
-                  </p>
-
-                  <p className="text-[8px] font-medium text-white/25">
-                    aura.kodari.xyz
-                  </p>
-                </div>
+                <button
+                  type="button"
+                  onClick={reset}
+                  className="mt-2 w-full py-3 text-xs font-medium text-white/30 transition hover:text-white/65"
+                >
+                  Probar otro nombre
+                </button>
               </div>
-
-              <button
-                type="button"
-                onClick={shareResult}
-                disabled={sharing}
-                className="mt-4 w-full rounded-xl bg-[#5865F2] px-4 py-3.5 text-sm font-bold text-white transition hover:bg-[#4752c4] active:scale-[0.99] disabled:opacity-50"
-              >
-                {sharing
-                  ? "Preparando resultado..."
-                  : "📸 Compartir resultado"}
-              </button>
-
-              <button
-                type="button"
-                onClick={downloadImage}
-                disabled={downloading}
-                className="mt-2.5 w-full rounded-xl border border-white/[0.09] bg-[#111318] px-4 py-3.5 text-sm font-semibold text-white/65 transition hover:bg-[#171920] hover:text-white disabled:opacity-50"
-              >
-                {downloading
-                  ? "Preparando imagen..."
-                  : "📥 Descargar imagen"}
-              </button>
-
-              <div className="mt-5 rounded-2xl border border-white/[0.08] bg-[#111318] p-5">
-                <div className="text-center">
-                  <p className="text-sm font-bold text-white/75">
-                    ¿Y vos?
-                  </p>
-
-                  <p className="mt-1.5 text-[11px] leading-5 text-white/40">
-                    Compartí tu resultado
-                    y hacé que tus amigos
-                    descubran el suyo.
-                  </p>
-                </div>
-
-                <div className="mt-5 flex items-center gap-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[9px] font-bold tracking-[0.12em] text-white/30 uppercase">
-                      tu resultado
-                    </p>
-
-                    <p className="mt-1.5 truncate text-xs text-white/50">
-                      aura.kodari.xyz/?u=
-                      {profile.username}
-                    </p>
-                  </div>
-
-                  {qrCode && (
-                    <img
-                      src={qrCode}
-                      alt="Código QR del resultado"
-                      className="h-[68px] w-[68px] shrink-0 rounded-lg"
-                    />
-                  )}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={reset}
-                className="mt-2 w-full py-3 text-xs font-medium text-white/30 transition hover:text-white/65"
-              >
-                Probar otro nombre
-              </button>
-            </div>
-          )}
+            )}
         </div>
       </section>
-
     </main>
   );
 };
